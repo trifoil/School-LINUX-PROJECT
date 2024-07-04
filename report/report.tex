@@ -8,7 +8,7 @@
 \usepackage[a4paper, total={6in, 9in}]{geometry}
 
 \title{Projet Linux}
-\author{FOFANAH Mankoulani \and VANGEEBERGEN Augustin}
+\author{VANGEEBERGEN Augustin}
 
 \date{\today}
 \renewcommand \contentsname{Table des matières}
@@ -34,9 +34,7 @@
 	\tableofcontents
 	\newpage
 	
-	
-	
-	
+
 	
 	\section{Introduction}
 	Dans le cadre de ce projet, nous avons pour objectif de configurer un serveur GNU/Linux. Nous avons le choix d'utiliser n'importe quelle distributon RedHat-like, par exemple Fedora, ou bien Alma, sur laquelle nous avons travaillé en cours. Ce point est important, pour pouvoir poser une question précise au professeur en cas de souci.
@@ -118,33 +116,71 @@
 		Le service SSH est indépendant des autres services. Le DNS, time server également.
 		
 		Cependant, les Serveurs Web, SQL et FTP doivent fonctionner en symbiose. C'est aussi le cas du NFS et SMB. Ce sera donc une personne qui s'occupera de ces services deux à deux.
-	\subsection{Répartition des tâches}
+	
+	
+	\section{Avant de commencer}
+	
+	\subsection{Hosting}
+	
+Hyper-V n'ayant pas apporté satisfaction (principalements bugs de corruption de checkpoints), je me suis tourné vers d'autres alternatives :
+\begin{itemize}
+\item Gnome boxes qui offre peu de flexibilité au niveau du réseau
+\item VMware Workstation qui a cassé lors d'une mise à jour du kernel de la machine hôte (Fedora 39 vers Fedora 40)
+\end{itemize}
+La seule solution correcte restante étant donc Oracle VirtualBox.
+	
+Virtualbox permet en outre d'associer un ou plusieurs disques virtuels à une machine virtuelle, ce qui est plutôt intéressant au vu du contexte, nous y viendrons dans la sous-section suivante.	
+	
+\pagebreak
+	\subsection{Partitionnement et RAID}
+
+Il est assez compliqué de séparer le partitionnement et la gestion des disques en deux sous sections, car ces deux concepts sont intimement liés.
+
+Il faut premièrement assurer la préservation des données, dans n'importe quel scénario. 
+
+Il faut également s'assurer que la hiérarchie du stockage a du sens et qu'elle est pratique. 
+
+Sur la machine virtuelle, il y aura :
+
+\begin{itemize}
+\item sur un disque, le système d'exploitation contenant les partitions suivantes :
+\begin{itemize}
+\item /boot
+\item /swap
+\item /
+\item /home
+\end{itemize}
+\item sur un autre disque, ou plutôt un array de disques en RAID :
+\begin{itemize}
+\item /share
+\item /web
+\end{itemize}
+\item et enfin, sur un ou plusieurs disque(s) additionnel(s) :
+\begin{itemize}
+\item /backup
+\end{itemize}
+\end{itemize}
+	
+	Petite liste des niveaux de RAID (redundant array of independent disks):
 	\begin{itemize}
-		\item Augustin
-		\begin{itemize}
-			\item Rapport
-			\item Menu TUI
-			\item Serveur Web
-			\item Serveur SQL
-			\item Serveur FTP 
-			\item Serveur SMB
-			\item Serveur NFS
-		\end{itemize}
-		\item Mankou
-		\begin{itemize}
-			\item Connexion SSH
-			\item Serveur NTP
-			\item Serveur DNS
-			\item Service de Backup
-		\end{itemize}
+	\item RAID 0
+	
+	Perfermances en lecture et écriture extrêmement élevées (jusqu'à n fois pour un nombre n de disques en lecture et écriture), mais aucune redondance, et donc non pertinent pour notre serveur.
+	\item RAID 1
+	
+	Disques miroirs. Meilleure redondance des informations (n-1 disques peuvent être retirés). Pire performance niveau vitesse d'écriture (égale a la vitesse d'écriture d'un disque seul) et vitesse de lecture jusqu'à la somme de la vitesse de chaque disque dans l'array (meilleur scénario). Choix rejeté car en pratique on recherche un milieu entre performance et sécurité/redondance.
+	\item RAID 2 
+	
+	
+	\item RAID 3
+
+
+	\item RAID 4
+
+
+	\item RAID 5
 	\end{itemize}
-	
-	
-	
-	
-	
-	
-	
+
 	\section{Code}
 %	\subsection{Introduction au Bash}
 %	Comme nous devons apprendre le Bash pour les scripts, voici une petite %synthèse simplifiée.
@@ -456,6 +492,10 @@ Le mode standalone indique que le serveur est autonome, et que le service tourne
 	\begin{thebibliography}{9}
 		\bibitem{reference1}
 		Author, A. (Year). Title of the article. \textit{Journal Name}, Volume(Issue), Pages.
+		
+		\bibitem{reference2}
+		Raid sous Oracle VirtualBox 
+		https://youtu.be/ZHVmGfteHCg
 	\end{thebibliography}
 
 
