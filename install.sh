@@ -37,3 +37,24 @@ display_menu() {
     echo "|----------------------------------------------------------------------|"
     echo ""
 }
+
+# Main function
+main() {
+    while true; do
+        display_menu
+        read -p "Enter your choice: " choice
+        case $choice in
+            0) nfs_share_wizard ;;
+            1) smb_share_wizard ;;
+            2) web_server_wizard ;;
+            3) ftp_server_wizard ;;
+            5) dns_server_wizard ;;
+            6) ntp_server_wizard ;;
+            7) ip_setup ;;
+            q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
+            *) clear && echo "Invalid choice. Please enter a valid option." ;;
+        esac
+    done
+}
+
+main
