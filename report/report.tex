@@ -36,70 +36,60 @@
 	
 
 	
-	\section{Introduction}
-	Dans le cadre de ce projet, nous avons pour objectif de configurer un serveur GNU/Linux. Nous avons le choix d'utiliser n'importe quelle distributon RedHat-like, par exemple Fedora, ou bien Alma, sur laquelle nous avons travaillé en cours. Ce point est important, pour pouvoir poser une question précise au professeur en cas de souci.
+\section{Introduction}
+Dans le cadre de ce projet, l'objectif est de configurer un serveur GNU/Linux. Cet exercice consiste à mettre en application la matière vue en classe, et à se préparer à un environnement réel.
 	
-	Notre choix se porte donc sur Alma Linux, mais les scripts fonctionnant sous Alma fonctionnent théoriquement exactement de la même manière sous Fedora Linux et RHEL.
+Les objectifs globaux sont donc l'application et la compréhension profonde des mécanismes permettant d'héberger les différents services souhaités, de la gestion des utilisateurs, ainsi que de la sécurité, que ce soit au niveau des attaques ou des sauvegardes.
+
+Nous avons le choix d'utiliser n'importe quelle distributon RedHat-like, par exemple Fedora, ou bien Alma, sur laquelle nous avons travaillé en cours.
+Le choix se porte sur Fedora, qui a une plus grosse communauté (dont je fais partie pour la partie desktop) et a ma préférence (utiliser alma ne changerait bien sûr quasiment rien, les deux distributions étant très similaires).
+
+Dans la deuxième itération de ce projet linux, la barre est automatiquement mise plus haut.
 	
-	L'OS fonctionnera dans une machine virtuelle, hébergée sur un HYPER-V de Windows. De cette manière, aussi bien un utilisateur Windows que linux pourra accéder aux différents services.
+Les consignes professeur sont toujours les mêmes, et sont reprises dans le sous-point suivant. Cependant, je souhaite faire tourner un serveur php pour mon homelab (et ainsi faire d'une pierre deux coups). L'option est donc présente en supplément.
 	
-	Le but est de pouvoir gérer en ssh un serveur avec plein d'outilsutiles, et de pouvoir installer/désinstaller les services à souhait, diminuant ainsi la surface d'attaque.
+L'OS de test est une machine virtuelle, hébergée sur VirtualBox. 
+	
+	Le but est aussi de pouvoir gérer en ssh le serveur avec plein d'outils utiles, et de pouvoir installer/désinstaller les services à souhait, diminuant ainsi la surface d'attaque.
 	
 	Nous devons donc gérer des services de partage de fichiers, serveur DNS, serveur Web ainsi que serveur temps.
 	
 	La dernière étape sera de sécuriser le serveur correctement, notamment en utilisant SELinux, et en définissant les polices d'utilisation correctes.
 	
-	\begin{center}Me when Linux on Windows :
-	\end{center}
-	\begin{figure}[h]
-		\centering
-		\includegraphics[width=0.5\textwidth]{meme.png}
-		\label{fig:meme}
-	\end{figure}
-	\newpage
+\begin{center}linux meme (19 juillet 2024) :
+\end{center}
+\begin{figure}[h]
+\centering
+\includegraphics[width=1\textwidth]{meme.png}
+\label{fig:meme}
+\end{figure}
+\newpage
 	
-	\subsection{Consignes professeur}
+\subsection{Consignes (pratiques) professeur}
 	
-	Les consignes sont les suivantes : 
+Les consignes sont les suivantes : 
 	
-	\begin{itemize}
-		\item Le serveur devra contenir un partage NFS qui permettra aux utilisateurs du réseaux local d’y stocker des fichiers.
-		\item Un partage Samba permettra aux utilisateurs Windows d’accéder à ce même partage.
-		\item Il faudra mettre en place un serveur Web, FTP, MySQL et DNS qui permettra un hébergement multiutilisateurs. Le FTP permettra à chaque utilisateur d’accéder à son dossier Web. Il faudra créer une zone dans le DNS pour nos sites. (Automatisation)
-		\item Le DNS fera également office de DNS cache pour le réseau local.
-		\item Vous mettrez en place un serveur de temps pour que les machines du réseau local puissent se synchroniser.
-		\item Vous devrez pouvoir vous connecter en SSH au serveur et y effectuer des configurations. (sécurité !!!)
-		\item Pour la sécurité :
-		\begin{itemize}
-			\item politique utilisateur
-			\item quotas
-			\item partitionnement et gestion disque (LVM et raid)
-			\item Gestion backup(ou, comment,…)
-			\item Maj, désactiver l’inutile.
-			\item Antivirus, firewall, ….
-		\end{itemize}
-		\item Vous êtes l’administrateur de ce serveur agissez en conséquence :
-		\begin{itemize}
-			\item Documenter
-			\item Automatiser (script)
-			\item Soyez proactif
-			\item Sécurisez
-			\item Tester
-		\end{itemize}
-		\item Le travail sera réalisé par groupe de deux et évaluer par moi pendant la session de juin
-		\item Il faudra une machine cliente pour effectuer les tests (Windows et Linux)
-		\item Vous devrez me démontrer le fonctionnement des services en 15 minutes. Donc connaissez votre machine et vos configurations sur le bout des doigts. Vous aurez 10 minutes pour installer le tout.
-		\item L’évaluation comptera pour 100\% des points. 
+\begin{itemize}
+\item Chaque groupe devra mettre en place un serveur linux selon les règles de l’art et devra respecter les bonnes méthodologies pour le faire.
+\item Le serveur devra permettre de partager un dossier sans authentification aussi bien pour l’environnement linux que Windows à l’aide de NFS et Samba.
+\item Une connexion SSH judicieusement sécurisée permettra à l’administrateur de configurer le serveur et d’exécuter des scripts sur le serveur.
+\item Le serveur devra permettre la mise à disposition pour un client : d’un nom de domaine dans notre domaine, d’un serveur web, d’un accès FTP et Samba à son dossier web et d’une base de données différente pour chaque utilisateur. Le tout devra être automatisé à l’aide de scripts de configurations. Bien sûr chaque client aura un dossier web, une base de données et un domaine différent.
+\item En bonus, chaque utilisateur devra posséder une adresse mail dans notre domaine ainsi qu’une interface web pour consulter ses mails.
+\item Le serveur de domaine devra également faire cache pour les requêtes, être maitre dans sa zone et également posséder une zone inverse.
+\item Le serveur devra permettre aux ordinateurs de son réseau de pouvoir mettre à jour l’heure de leurs machines.
+\item Le plan de sauvegarde établi devra être mis en place.
+\item Une attention particulière sera portée sur la sécurisation du serveur et des services à l’aide des outils disponibles. (FW, antivirus, SELinux, …)
+\item Toutes les installations et configurations seront notées dans le journal de bord de votre serveur.
 		
-	\end{itemize}
+\end{itemize}
 	
-	\newpage	
+\newpage	
 	
-	\subsection{Roadmap}
-	L'ensemble sera scripté pour coller à l'ensemble des cas d'utilisation. Voici donc la liste prévue de ces scripts (pour installer/désinstaller):
-		\begin{itemize}
-			\item Menu de sélection
-			\item SSH config wizard
+\subsection{Roadmap}
+L'ensemble sera scripté pour coller à l'ensemble des cas d'utilisation. Voici donc la liste prévue de ces scripts (pour installer/désinstaller):
+\begin{itemize}
+\item Menu de sélection
+\item SSH config wizard
 			\item File sharing install wizard
 			\item Web server install wizard
 			\item FTP server install wizard
@@ -117,10 +107,11 @@
 		
 		Cependant, les Serveurs Web, SQL et FTP doivent fonctionner en symbiose. C'est aussi le cas du NFS et SMB. Ce sera donc une personne qui s'occupera de ces services deux à deux.
 	
+\pagebreak
+
+\section{Avant de commencer}
 	
-	\section{Avant de commencer}
-	
-	\subsection{Hosting}
+\subsection{Hosting}
 	
 Hyper-V n'ayant pas apporté satisfaction (principalements bugs de corruption de checkpoints), je me suis tourné vers d'autres alternatives :
 \begin{itemize}
@@ -131,8 +122,7 @@ La seule solution correcte restante étant donc Oracle VirtualBox.
 	
 Virtualbox permet en outre d'associer un ou plusieurs disques virtuels à une machine virtuelle, ce qui est plutôt intéressant au vu du contexte, nous y viendrons dans la sous-section suivante.	
 	
-\pagebreak
-	\subsection{Partitionnement et RAID}
+\subsection{Partitionnement et RAID}
 
 Il est assez compliqué de séparer le partitionnement et la gestion des disques en deux sous sections, car ces deux concepts sont intimement liés.
 
@@ -396,9 +386,11 @@ git clone https://github.com/trifoil/School-LINUX-PROJECT.git
 
 \subsection{Menu principal}
 
-Pour lancer le script, il suffit de se re
+Pour lancer le script, il suffit de se rendre dans le directory School-LINUX-PROJEC, et d'exécuter le script intitulé "install.sh" en sudo.
 
 \subsection{RAID}
+
+	\colorbox{yellow}{\textcolor{red}{!! A finir}}
 
 
 \pagebreak
