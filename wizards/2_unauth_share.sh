@@ -29,17 +29,17 @@ nfs(){
 }
 
 smb(){
-    # echo "test"
-    # dnf update -y
-    # dnf -y install samba samba-client
-    # systemctl enable smb --now
-    # systemctl enable nmb --now    
+    echo "test"
+    dnf update -y
+    dnf -y install samba samba-client
+    systemctl enable smb --now
+    systemctl enable nmb --now    
 
-    # firewall-cmd --permanent --add-service=samba
-    # firewall-cmd --reload
+    firewall-cmd --permanent --add-service=samba
+    firewall-cmd --reload
 
-    # chown -R nobody:nobody /mnt/raid5_share/unauth_share
-    # chmod -R 0777 /mnt/raid5_share/unauth_share
+    chown -R nobody:nobody /mnt/raid5_share/unauth_share
+    chmod -R 0777 /mnt/raid5_share/unauth_share
     
     # cp wizards/2_unauth_share.conf /etc/samba/smb.unauth.conf
     
@@ -72,7 +72,7 @@ smb(){
 
     # Set the appropriate permissions
     sudo chmod -R 0777 /mnt/raid5_share/unauth_share
-    sudo chown -R nobody:nogroup /mnt/raid5_share/unauth_share
+    sudo chown -R nobody:nobody /mnt/raid5_share/unauth_share
 
     # Backup the original smb.conf file
     sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.bak
@@ -107,8 +107,11 @@ cat <<EOL | sudo tee /etc/samba/unauth_share.conf
 EOL
 
 # Restart Samba service to apply changes
-sudo systemctl restart smb
-sudo systemctl enable smb
+systemctl restart smb
+systemctl enable smb
+
+systemctl restart smb
+systemctl restart nmb
 
 echo "Samba has been installed and configured successfully."
 
