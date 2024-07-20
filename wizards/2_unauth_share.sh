@@ -94,21 +94,21 @@ EOL
 # Write the subconfiguration file for the unauthenticated share
 cat <<EOL | sudo tee /etc/samba/unauth_share.conf
 [unauth_share]
-    path = /mnt/raid5_share/unauth_share
-    browsable = yes
-    writable = yes
-    guest ok = yes
-    guest only = yes
-    force user = nobody
-    force group = nogroup
-    create mask = 0777
-    directory mask = 0777
-    read only = no
+   path = /mnt/raid5_share/unauth_share
+   browsable = yes
+   writable = yes
+   guest ok = yes
+   guest only = yes
+   force user = nobody
+   force group = nobody
+   create mask = 0777
+   directory mask = 0777
+   read only = no
 EOL
 
 # Restart Samba service to apply changes
-sudo systemctl restart smbd
-sudo systemctl enable smbd
+sudo systemctl restart smb
+sudo systemctl enable smb
 
 echo "Samba has been installed and configured successfully."
 
