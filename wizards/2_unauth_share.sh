@@ -37,6 +37,9 @@ smb(){
 
     firewall-cmd --permanent --add-service=samba
     firewall-cmd --reload
+
+    chown -R nobody:nobody /mnt/raid5_share/unauth_share
+    chmod -R 0777 /mnt/raid5_share/unauth_share
     
     cp wizards/2_unauth_share.conf /etc/samba/smb.unauth.conf
     
