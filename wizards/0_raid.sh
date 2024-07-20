@@ -3,7 +3,7 @@
 # creating the lvm 
 
 sudo dnf install lvm2 mdadm
-sudo mdadm --create --verbose /dev/md127 --level=5 --raid-devices=3 /dev/sdb /dev/sdc /dev/sdd
+sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=3 /dev/sdb /dev/sdc /dev/sdd
 sudo pvcreate /dev/md0
 sudo vgcreate vg_raid5 /dev/md0
 
