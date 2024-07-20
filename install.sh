@@ -18,9 +18,9 @@ display_menu() {
     echo -e "|                 ${GREEN}Welcome to the server assistant ${NC}                     |"
     echo "|              Please select the tool you want to use                  |"
     echo "|----------------------------------------------------------------------|"
-    echo "| 0. Say Hello                                                         |"
-    echo "| 1. SSH connection                                                    |"
-    echo "| 2. NFS/SAMBA shared directory (no auth)                              |"
+    echo "| 0. RAID Configuration                                                |"
+    echo "| 1. SSH Connection                                                    |"
+    echo "| 2. NFS/SAMBA Shared Directory (no auth)                              |"
     echo "| 3. Users Management Menu                                             |"
     #contains
     #server, mail, users management, domain mangement
