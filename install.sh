@@ -65,6 +65,11 @@ security(){
     sh wizards/5_security.sh
 }
 
+backup(){
+    chmod +x wizards/6_backup.sh
+    sh wizards/6_backup.sh
+}
+
 logs(){
     chmod +x wizards/7_logs.sh
     sh wizards/7_logs.sh
@@ -76,13 +81,13 @@ main() {
         display_menu
         read -p "Enter your choice: " choice
         case $choice in
-            0) sayhello ;;
-            1) raid ;;
-            2) ssh ;;
-            3) unauthshare ;;
-            4) usersmanagement ;;
-            5) ntp ;;
-            6) security ;;
+            0) raid ;;
+            1) ssh ;;
+            2) unauthshare ;;
+            3) usersmanagement ;;
+            4) ntp ;;
+            5) security ;;
+            6) backup ;;
             7) logs ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
