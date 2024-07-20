@@ -77,8 +77,13 @@ main() {
         read -p "Enter your choice: " choice
         case $choice in
             0) sayhello ;;
-            1) 1 ;;
-            2) 2 ;;
+            1) raid ;;
+            2) ssh ;;
+            3) unauthshare ;;
+            4) usersmanagement ;;
+            5) ntp ;;
+            6) security ;;
+            7) logs ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac
