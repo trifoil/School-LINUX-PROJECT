@@ -56,59 +56,17 @@ smb(){
     fi
 
     # Restart Samba services to apply changes
+
+    # SELINUX RAHHHHHHHHHHH
+    /sbin/restorecon -R -v /mnt/raid5_share
+    setsebool -P samba_export_all_rw 1
+    touch /.autorelabel; reboot
+
     systemctl restart smb
     systemctl restart nmb
 
     echo "Samba services restarted"
 
-#     #!/bin/bash
-
-#     # Update package list and install Samba
-#     sudo apt update
-#     sudo apt install -y samba
-
-#     # Create the directory for the share if it doesn't exist
-#     sudo mkdir -p /mnt/raid5_share/unauth_share
-
-#     # Set the appropriate permissions
-#     sudo chmod -R 0777 /mnt/raid5_share/unauth_share
-#     sudo chown -R nobody:nobody /mnt/raid5_share/unauth_share
-
-#     # Backup the original smb.conf file
-#     sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.bak
-
-# # Write the main smb.conf content to the file
-# cat <<EOL | sudo tee /etc/samba/smb.conf
-# [global]
-#    workgroup = WORKGROUP
-#    security = user
-#    map to guest = Bad User
-#    log file = /var/log/samba/log.%m
-#    max log size = 50
-#    dns proxy = no
-
-# # Include the subconfiguration file for the unauthenticated share
-# include = /etc/samba/unauth_share.conf
-# EOL
-
-# # Write the subconfiguration file for the unauthenticated share
-# cat <<EOL | sudo tee /etc/samba/unauth_share.conf
-# [unauth_share]
-#    path = /mnt/raid5_share/unauth_share
-#    browsable = yes
-#    writable = yes
-#    guest ok = yes
-#    guest only = yes
-#    force user = nobody
-#    force group = nobody
-#    create mask = 0777
-#    directory mask = 0777
-#    read only = no
-# EOL
-
-# # Restart Samba service to apply changes
-# systemctl restart smb
-# systemctl enable smb
 
 systemctl restart smb
 systemctl restart nmb
