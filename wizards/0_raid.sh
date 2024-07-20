@@ -45,6 +45,8 @@ sudo mount /dev/vg_raid5/web /mnt/raid5_web
 # Get the UUID of the 'web' logical volume and add it to fstab for automatic mounting
 sudo blkid /dev/vg_raid5/web | awk '{print $2 " /mnt/raid5_web ext4 defaults 0 0"}' | sudo tee -a /etc/fstab
 
+systemctl daemon-reload
+
 # Verify mounts
 df -h
 
