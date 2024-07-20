@@ -37,6 +37,26 @@ smb(){
 
     firewall-cmd --permanent --add-service=samba
     firewall-cmd --reload
+    
+    cp wizards/2_unauth_share.conf /etc/samba/smb.unauth.conf
+    
+    PRIMARY_CONF="/etc/samba/smb.conf"
+    INCLUDE_LINE="include = /etc/samba/smb.unauth.conf"
+
+    # Check if the include line already exists in the primary configuration file
+    if ! grep -Fxq "$INCLUDE_LINE" "$PRIMARY_CONF"; then
+        # If not, append the include line to the end of the primary configuration file
+        echo "$INCLUDE_LINE" >> "$PRIMARY_CONF"
+        echo "Include line added to $PRIMARY_CONF"
+    else
+        echo "Include line already exists in $PRIMARY_CONF"
+    fi
+
+    # Restart Samba services to apply changes
+    systemctl restart smb
+    systemctl restart nmb
+
+    echo "Samba services restarted"
 
     echo "Press any key to continue..."
     read -n 1 -s key
