@@ -27,23 +27,47 @@ display_menu() {
     #
     echo "| 4. NTP Time Server                                                   |"
     echo "| 5. Security Settings                                                 |"
-    echo "| 6. Consult Logs Dashboard                                            |"
+    echo "| 6. Backup                                                            |"
+    echo "| 7. Consult Logs Dashboard                                            |"
     echo "|----------------------------------------------------------------------|"
     echo "| q. Quit                                                              |"
     echo "|----------------------------------------------------------------------|"
     echo ""
 }
 
-0(){
-    echo "hello"
+raid(){
+    chmod +x wizards/0_raid.sh
+    sh wizards/0_raid.sh
 }
 
-1(){
-    echo test
+ssh(){
+    chmod +x wizards/1_ssh.sh
+    sh wizards/1_ssh.sh
 }
 
-2(){
+unauthshare(){
+    chmod +x 
+    sh 
+}
 
+usersmanagement(){
+    chmod +x 
+    sh 
+}
+
+ntp(){
+    chmod +x 
+    sh 
+}
+
+security(){
+    chmod +x 
+    sh 
+}
+
+logs(){
+    chmod +x 
+    sh 
 }
 
 # Main function
