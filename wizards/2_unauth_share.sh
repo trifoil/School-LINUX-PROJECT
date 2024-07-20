@@ -21,11 +21,11 @@ make_dir(){
 }
 
 nfs(){
-
+    echo "test"
 }
 
 smb(){
-
+    echo "test"
 }
 
 main() {
