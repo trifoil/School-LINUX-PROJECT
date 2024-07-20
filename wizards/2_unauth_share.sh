@@ -30,6 +30,17 @@ nfs(){
 
 smb(){
     echo "test"
+    dnf update -y
+    dnf -y install samba samba-client
+    systemctl enable smb --now
+    systemctl enable nmb --now    
+
+    firewall-cmd --permanent --add-service=samba
+    firewall-cmd --reload
+
+    echo "Press any key to continue..."
+    read -n 1 -s key
+	clear
 }
 
 main() {
