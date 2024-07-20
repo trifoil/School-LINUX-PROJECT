@@ -60,7 +60,7 @@ smb(){
     # SELINUX RAHHHHHHHHHHH
     /sbin/restorecon -R -v /mnt/raid5_share
     setsebool -P samba_export_all_rw 1
-    touch /.autorelabel; reboot
+#    touch /.autorelabel; reboot
 
     systemctl restart smb
     systemctl restart nmb
