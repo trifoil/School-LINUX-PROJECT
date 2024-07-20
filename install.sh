@@ -46,28 +46,28 @@ ssh(){
 }
 
 unauthshare(){
-    chmod +x 
-    sh 
+    chmod +x wizards/2_unauth_share.sh
+    sh wizards/2_unauth_share.sh
 }
 
 usersmanagement(){
-    chmod +x 
-    sh 
+    chmod +x wizards/3_user_man.sh
+    sh wizards/3_user_man.sh
 }
 
 ntp(){
-    chmod +x 
-    sh 
+    chmod +x wizards/4_ntp_server.sh
+    sh wizards/4_ntp_server.sh
 }
 
 security(){
-    chmod +x 
-    sh 
+    chmod +x wizards/5_security.sh
+    sh wizards/5_security.sh
 }
 
 logs(){
-    chmod +x 
-    sh 
+    chmod +x wizards/7_logs.sh
+    sh wizards/7_logs.sh
 }
 
 # Main function
