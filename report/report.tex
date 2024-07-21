@@ -73,7 +73,7 @@ Les consignes sont les suivantes :
 	
 \begin{itemize}
 \item Chaque groupe devra mettre en place un serveur linux selon les règles de l’art et devra respecter les bonnes méthodologies pour le faire.
-\item Le serveur devra permettre de partager un dossier sans authentification aussi bien pour l’environnement linux que Windows à l’aide de NFS et Samba.
+\item Le serveur devra permettre de partager un dossier sans authentification aussi bien pour l’environnement Linux que Windows à l’aide de NFS et Samba.
 \item Une connexion SSH judicieusement sécurisée permettra à l’administrateur de configurer le serveur et d’exécuter des scripts sur le serveur.
 \item Le serveur devra permettre la mise à disposition pour un client : d’un nom de domaine dans notre domaine, d’un serveur web, d’un accès FTP et Samba à son dossier web et d’une base de données différente pour chaque utilisateur. Le tout devra être automatisé à l’aide de scripts de configurations. Bien sûr chaque client aura un dossier web, une base de données et un domaine différent.
 \item En bonus, chaque utilisateur devra posséder une adresse mail dans notre domaine ainsi qu’une interface web pour consulter ses mails.
@@ -401,11 +401,7 @@ Les volumes dans lesquels viennent se mettre les partages et fichiers web sont \
 
 Le partage sans authentification, donc avec accès libre en écriture et lecture, doit être accessible depuis Linuw et Windows. NFS sera donc utilisé pour linux et Samba pour Windows. 
 
-Le script offre la possibilité de créer un dossier dans le chemin préétabli, ou de choisir le chemin.
-
-Il offre aussi la possibilité de créer séparément un partage NFS et un partage SMB.
-
-Il gère également les autorisations pour que SELinux autororise l'accès.
+Le script offre la possibilité de créer un dossier dans le chemin préétabli, ou de choisir le chemin. Il offre aussi la possibilité de créer séparément un partage NFS et un partage SMB. Il gère également les autorisations pour que SELinux autororise l'accès.
 
 \colorbox{yellow}{\textcolor{red}{!! Ajouter limites de poids du dossier}}
 
@@ -742,6 +738,6 @@ Le mode standalone indique que le serveur est autonome, et que le service tourne
 
 	\section*{Remerciements}
 	
-	Remerciements à Pauline M. pour ses encouragement et à la concentration :)
+	Remerciements à Pauline M. pour ses encouragement et son aide à la concentration :)
 
 \end{document}
