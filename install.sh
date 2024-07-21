@@ -3,7 +3,7 @@
 clear
 
 RED='\033[0;31m' #Red
-GREEN='\033[0;32m' #Red
+BLUE='\e[38;5;33m' #Red
 NC='\033[0m' # No Color
 
 updatedb
@@ -15,16 +15,13 @@ firewall-cmd --reload
 display_menu() {
     echo ""
     echo "|----------------------------------------------------------------------|"
-    echo -e "|                 ${GREEN}Welcome to the server assistant ${NC}                     |"
+    echo -e "|                 ${BLUE}Welcome to the server assistant ${NC}                     |"
     echo "|              Please select the tool you want to use                  |"
     echo "|----------------------------------------------------------------------|"
     echo "| 0. RAID Configuration                                                |"
     echo "| 1. SSH Connection                                                    |"
     echo "| 2. NFS/SAMBA Shared Directory (no auth)                              |"
     echo "| 3. Users Management Menu                                             |"
-    #contains
-    #server, mail, users management, domain mangement
-    #
     echo "| 4. NTP Time Server                                                   |"
     echo "| 5. Security Settings                                                 |"
     echo "| 6. Backup                                                            |"

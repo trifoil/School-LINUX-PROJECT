@@ -24,9 +24,11 @@
 	
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.5\textwidth]{Gold\_AlmaLinux.jpg}	
+		\includegraphics[width=0.5\textwidth]{Gold\_AlmaLinux.jpg}
 		\label{fig:logoheh}
 	\end{figure}
+	
+
 	
 	\newpage
 
@@ -397,11 +399,15 @@ Les volumes dans lesquels viennent se mettre les partages et fichiers web sont \
 
 \subsection{Partage sans authentification}
 
-NFS + SAMBA
+Le partage sans authentification, donc avec accès libre en écriture et lecture, doit être accessible depuis Linuw et Windows. NFS sera donc utilisé pour linux et Samba pour Windows. 
 
-le script offre la possibilité de créer un dossier dans le chemin préétabli, ou de choisir le chemin.
+Le script offre la possibilité de créer un dossier dans le chemin préétabli, ou de choisir le chemin.
 
-il offre aussi la possibilité de créer séparément un partage NFS et un partage SMB.
+Il offre aussi la possibilité de créer séparément un partage NFS et un partage SMB.
+
+Il gère également les autorisations pour que SELinux autororise l'accès.
+
+	\colorbox{yellow}{\textcolor{red}{!! Ajouter limites de poids du dossier}}
 
 
 \pagebreak
@@ -727,5 +733,8 @@ Le mode standalone indique que le serveur est autonome, et que le service tourne
 		https://youtu.be/ZHVmGfteHCg
 	\end{thebibliography}
 
+	\section*{Remerciements}
+	
+	Remerciements à Pauline M. pour ses encouragement et à la concentration :)
 
 \end{document}
