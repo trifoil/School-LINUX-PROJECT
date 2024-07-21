@@ -46,7 +46,6 @@ nfs(){
     firewall-cmd --reload
 
     showmount -e
-
 }
 
 smb(){

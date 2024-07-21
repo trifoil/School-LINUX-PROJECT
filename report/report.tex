@@ -407,8 +407,15 @@ Il offre aussi la possibilité de créer séparément un partage NFS et un parta
 
 Il gère également les autorisations pour que SELinux autororise l'accès.
 
-	\colorbox{yellow}{\textcolor{red}{!! Ajouter limites de poids du dossier}}
+\colorbox{yellow}{\textcolor{red}{!! Ajouter limites de poids du dossier}}
 
+Pour monter le directory en NFS :
+
+\texttt{sudo mount -t nfs 192.168.1.195:/mnt/raid5\_share/unauth\_share /mnt}
+
+Pour démonter le directory en NFS :
+
+\texttt{sudo umount /mnt}
 
 \pagebreak
 
