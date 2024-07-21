@@ -47,8 +47,6 @@ nfs(){
 
     showmount -e
 
-    sudo mount -t nfs <server_ip>:/mnt/raid5_share/unauth_share /mnt
-
 }
 
 smb(){
