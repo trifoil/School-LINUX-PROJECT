@@ -19,7 +19,6 @@ display_menu() {
     echo ""
 }
 
-
 nfs(){
     echo "Installing NFS share"
     dnf install nfs-utils
