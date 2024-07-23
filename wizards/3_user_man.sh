@@ -22,17 +22,42 @@ display_menu() {
 
 add() {
 
-    
-    
+    echo "Please input the user name : "
+    read name
+
+    # Dir creation
+
+    mkdir -p "/mnt/raid5_web/$name"
+
+    # Check if the directory was created successfully
+    if [ $? -eq 0 ];    then
+        echo "Directory '/mnt/raid5_web/$name' created successfully."
+    else
+        echo "Failed to create directory '/mnt/raid5_web/$name'."
+    fi
+
+    # Creating user
+
+    useradd $name
+    echo "unix user created"
+    smbpasswd -a $smbuser
+    echo "smb user created"
+
+    # Samba set up
+
     echo "Installing Samba share"
     dnf update -y
     dnf -y install samba samba-client
     systemctl enable smb --now
     systemctl enable nmb --now 
+
+    
+
 }
 
 remove() {
-
+    echo "which user do you want to remove?"
+    pdbedit -L
 }
 
 main() {
@@ -40,8 +65,8 @@ main() {
         display_menu
         read -p "Enter your choice: " choice
         case $choice in
-            0)  ;;
-            1)  ;;
+            0) add ;;
+            1) remove ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac

@@ -20,6 +20,7 @@ display_menu() {
 }
 
 nfs(){
+    
     echo "Installing NFS share"
     dnf install nfs-utils
     mkdir -p /mnt/raid5_share/unauth_share
