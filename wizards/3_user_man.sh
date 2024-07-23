@@ -21,6 +21,15 @@ display_menu() {
 
 
 add() {
+    # Samba set up
+    echo "Installing Samba"
+    dnf update -y
+    dnf -y install samba samba-client
+    systemctl enable smb --now
+    systemctl enable nmb --now 
+
+    # Storing the name in variable "name"
+
     echo "Please input the user name : "
     read name
 
@@ -42,13 +51,6 @@ add() {
     smbpasswd -a $smbuser
     echo "smb user created"
 
-    # Samba set up
-
-    echo "Installing Samba share"
-    dnf update -y
-    dnf -y install samba samba-client
-    systemctl enable smb --now
-    systemctl enable nmb --now 
 }
 
 remove() {
