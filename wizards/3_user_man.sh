@@ -10,8 +10,9 @@ display_menu() {
     echo -e "|              ${BLUE}Welcome To The User Management Menu ${NC}              |"
     echo "|              Please select the tool you want to use                  |"
     echo "|----------------------------------------------------------------------|"
-    echo "| 0. Add User                                                          |"
-    echo "| 1. Remove User                                                       |"
+    echo "| 0. Install PHP and SQL                                               |"
+    echo "| 1. Add User                                                          |"
+    echo "| 2. Remove User                                                       |"
     echo "|----------------------------------------------------------------------|"
     echo "| q. Quit                                                              |"
     echo "|----------------------------------------------------------------------|"
@@ -19,8 +20,7 @@ display_menu() {
 }
 
 
-
-add() {
+setup() {
     # Samba set up
     echo "Installing Samba"
     dnf update -y
@@ -28,10 +28,23 @@ add() {
     systemctl enable smb --now
     systemctl enable nmb --now 
 
+    # Php and SQL set up
+    sudo dnf install httpd php php-mysqlnd mariadb-server
+
+    sudo systemctl start httpd
+    sudo systemctl enable httpd
+    sudo systemctl start mariadb
+    sudo systemctl enable mariadb
+
+    sudo mysql_secure_installation
+}
+add(){
     # Storing the name in variable "name"
 
     echo "Please input the user name : "
     read name
+
+
 
     # Dir creation
 
@@ -63,8 +76,9 @@ main() {
         display_menu
         read -p "Enter your choice: " choice
         case $choice in
-            0) add ;;
-            1) remove ;;
+            0) setup ;;
+            1) add ;;
+            2) remove ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac
