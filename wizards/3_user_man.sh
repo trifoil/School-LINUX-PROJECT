@@ -8,10 +8,10 @@ display_menu() {
     echo ""
     echo "|----------------------------------------------------------------------|"
     echo -e "|              ${BLUE}Welcome To The User Management Menu ${NC}              |"
-    echo "|              Please select the tool you want to use                  |"        .
+    echo "|              Please select the tool you want to use                  |"
     echo "|----------------------------------------------------------------------|"
-    echo "| 0.                                                     |"
-    echo "| 1.                                                      |"
+    echo "| 0. Add User                                                          |"
+    echo "| 1. Remove User                                                       |"
     echo "|----------------------------------------------------------------------|"
     echo "| q. Quit                                                              |"
     echo "|----------------------------------------------------------------------|"
@@ -19,6 +19,21 @@ display_menu() {
 }
 
 
+
+add() {
+
+    
+    
+    echo "Installing Samba share"
+    dnf update -y
+    dnf -y install samba samba-client
+    systemctl enable smb --now
+    systemctl enable nmb --now 
+}
+
+remove() {
+
+}
 
 main() {
     while true; do
