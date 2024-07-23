@@ -21,7 +21,6 @@ display_menu() {
 
 
 add() {
-
     echo "Please input the user name : "
     read name
 
@@ -50,9 +49,6 @@ add() {
     dnf -y install samba samba-client
     systemctl enable smb --now
     systemctl enable nmb --now 
-
-    
-
 }
 
 remove() {
