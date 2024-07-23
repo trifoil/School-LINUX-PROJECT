@@ -48,7 +48,7 @@ add() {
 
     useradd $name
     echo "unix user created"
-    smbpasswd -a $smbuser
+    smbpasswd -a $name
     echo "smb user created"
 
 }
