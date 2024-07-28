@@ -24,6 +24,7 @@ display_menu() {
 test(){
 echo "hi"
 
+
 # Function to check if a command succeeded
 check_success() {
   if [ $? -ne 0 ]; then
@@ -43,10 +44,10 @@ echo
 dir="/mnt/raid5_web/$username"
 
 # Check if the directory already exists
-# if [ -d "$dir" ]; then
-#   echo "Directory $dir already exists. Exiting."
-#   exit 1
-# fi
+if [ -d "$dir" ]; then
+  echo "Directory $dir already exists. Exiting."
+  exit 1
+fi
 
 # Create the directory
 mkdir -p "$dir"
@@ -73,8 +74,6 @@ GRANT ALL PRIVILEGES ON ${username}_db.* TO '$username'@'localhost';
 FLUSH PRIVILEGES;
 EOF
 check_success "Failed to create MySQL user and database"
-
-echo "test1"
 
 # Set up DNS server with local.arpa domain
 sudo bash -c 'cat > /etc/named.conf <<EOF
@@ -133,10 +132,16 @@ $username  IN  A   127.0.0.1
 EOF'
 
 # Enable and start the DNS server
-echo "test2"
 sudo systemctl enable named
 sudo systemctl start named
 check_success "Failed to start DNS server"
+
+# Troubleshoot DNS server if it fails to start
+if ! systemctl is-active --quiet named; then
+  echo "DNS server failed to start. Checking logs..."
+  sudo journalctl -u named -n 50
+  exit 1
+fi
 
 # Configure Apache for the user
 sudo bash -c "cat > /etc/httpd/conf.d/${username}.conf <<EOF
