@@ -21,6 +21,10 @@ display_menu() {
 
 
 setup() {
+
+    sudo dnf update -y
+    sudo dnf install httpd vsftpd samba mariadb-server bind bind-utils -y
+
     # Samba set up
     echo "Installing Samba"
     dnf update -y
@@ -38,6 +42,12 @@ setup() {
 
     sudo mysql_secure_installation
 }
+
+test(){
+    echo "testing"
+}
+
+
 add(){
     # Storing the name in variable "name"
 
@@ -79,6 +89,7 @@ main() {
             0) setup ;;
             1) add ;;
             2) remove ;;
+            3) test ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac

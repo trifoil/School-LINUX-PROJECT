@@ -1,4 +1,0 @@
-x
-passx
-y
-passy

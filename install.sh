@@ -33,23 +33,23 @@ display_menu() {
 }
 
 raid(){
-    chmod +x wizards/0_raid.sh
-    sh wizards/0_raid.sh
+    chmod +x wizards/0_raid/0_raid.sh
+    sh wizards/0_raid/0_raid.sh
 }
 
 ssh(){
-    chmod +x wizards/1_ssh.sh
-    sh wizards/1_ssh.sh
+    chmod +x wizards/1_ssh/1_ssh.sh
+    sh wizards/1_ssh/1_ssh.sh
 }
 
 unauthshare(){
-    chmod +x wizards/2_unauth_share.sh
-    sh wizards/2_unauth_share.sh
+    chmod +x wizards/2_unauth_share/2_unauth_share.sh
+    sh wizards/2_unauth_share/2_unauth_share.sh
 }
 
 usersmanagement(){
-    chmod +x wizards/3_user_man.sh
-    sh wizards/3_user_man.sh
+    chmod +x wizards/3_user_management/3_user_management.sh
+    sh wizards/3_user_management/3_user_management.sh
 }
 
 ntp(){
