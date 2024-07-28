@@ -43,10 +43,10 @@ echo
 dir="/mnt/raid5_web/$username"
 
 # Check if the directory already exists
-if [ -d "$dir" ]; then
-  echo "Directory $dir already exists. Exiting."
-  exit 1
-fi
+# if [ -d "$dir" ]; then
+#   echo "Directory $dir already exists. Exiting."
+#   exit 1
+# fi
 
 # Create the directory
 mkdir -p "$dir"
