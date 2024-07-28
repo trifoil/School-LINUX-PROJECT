@@ -74,6 +74,8 @@ FLUSH PRIVILEGES;
 EOF
 check_success "Failed to create MySQL user and database"
 
+echo "test1"
+
 # Set up DNS server with local.arpa domain
 sudo bash -c 'cat > /etc/named.conf <<EOF
 options {
@@ -131,6 +133,7 @@ $username  IN  A   127.0.0.1
 EOF'
 
 # Enable and start the DNS server
+echo "test2"
 sudo systemctl enable named
 sudo systemctl start named
 check_success "Failed to start DNS server"
