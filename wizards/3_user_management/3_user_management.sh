@@ -7,28 +7,33 @@ clear
 display_menu() {
     echo ""
     echo "|----------------------------------------------------------------------|"
-    echo -e "|                ${BLUE}Welcome To The User Management Menu ${NC}                |"
+    echo -e "|                ${BLUE}Welcome To The User Management Menu ${NC}                  |"
     echo "|               Please select the tool you want to use                 |"
     echo "|----------------------------------------------------------------------|"
     echo "| 0. Install PHP and SQL                                               |"
     echo "| 1. Add User                                                          |"
     echo "| 2. Remove User                                                       |"
     echo "| 3. Test                                                              |"
+    echo "| 4. DNS enable                                                              |"
     echo "|----------------------------------------------------------------------|"
     echo "| q. Quit                                                              |"
     echo "|----------------------------------------------------------------------|"
     echo ""
 }
 
+enable_dns(){
+
+}
+
+disable_dns(){
+
+}
 
 test(){
 
 # Prompt for a username
 read -p "Enter a username: " USERNAME
-
 read -sp "Enter a password: " PASSWORD
-
-echo
 
 # Define the directory
 DIR="/mnt/raid5_web/$USERNAME"
@@ -41,7 +46,6 @@ if [ -d "$DIR" ]; then
     else
         echo "The directory $DIR is not Empty"
     fi
-
 fi
 
 # Create the directory
@@ -224,6 +228,7 @@ main() {
             1) add ;;
             2) remove ;;
             3) test ;;
+            4) dns_enable ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac
