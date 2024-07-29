@@ -23,6 +23,24 @@ display_menu() {
 
 enable_dns(){
 
+echo "installing bind..."
+dnf install bind bind-utils -y
+
+echo "adding firewall rules..."
+firewall-cmd --permanent --add-service=dns
+firewall-cmd --reload
+systemctl enable --now named
+
+
+bash -c 'cat > /etc/named.conf <<EOF
+# 
+# 
+# EOF'
+
+
+
+
+
 }
 
 disable_dns(){
