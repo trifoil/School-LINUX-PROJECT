@@ -126,7 +126,6 @@ systemctl start mariadb
 # Enable and start the DNS server
 systemctl enable named
 systemctl start named
-check_success "Failed to start DNS server"
 
 # # Troubleshoot DNS server if it fails to start
 # if ! systemctl is-active --quiet named; then
