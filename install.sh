@@ -33,8 +33,7 @@ display_menu() {
 }
 
 raid(){
-    chmod +x wizards/0_raid/0_raid.sh
-    sh wizards/0_raid/0_raid.sh
+    . wizards/0_raid/0_raid.sh
 }
 
 ssh(){
