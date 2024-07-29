@@ -7,8 +7,8 @@ clear
 display_menu() {
     echo ""
     echo "|----------------------------------------------------------------------|"
-    echo -e "|              ${BLUE}Welcome To The User Management Menu ${NC}              |"
-    echo "|              Please select the tool you want to use                  |"
+    echo -e "|                ${BLUE}Welcome To The User Management Menu ${NC}                |"
+    echo "|               Please select the tool you want to use                 |"
     echo "|----------------------------------------------------------------------|"
     echo "| 0. Install PHP and SQL                                               |"
     echo "| 1. Add User                                                          |"
@@ -48,13 +48,11 @@ fi
 mkdir -p "$DIR"
 echo "Created $DIR directory" 
 # Install necessary packages if not already installed
-sudo dnf install -y bind bind-utils httpd php php-mysqlnd mariadb-server phpmyadmin
-check_success "Failed to install necessary packages"
+dnf install -y bind bind-utils httpd php php-mysqlnd mariadb-server phpmyadmin
 
 # Enable and start MariaDB
-sudo systemctl enable mariadb
-sudo systemctl start mariadb
-check_success "Failed to start MariaDB"
+systemctl enable mariadb
+systemctl start mariadb
 
 # Secure MariaDB installation (You might want to automate this part with expect or do it manually)
 #sudo mysql_secure_installation
@@ -125,10 +123,10 @@ check_success "Failed to start MariaDB"
 # $username  IN  A   127.0.0.1
 # EOF'
 
-# # Enable and start the DNS server
-# sudo systemctl enable named
-# sudo systemctl start named
-# check_success "Failed to start DNS server"
+# Enable and start the DNS server
+systemctl enable named
+systemctl start named
+check_success "Failed to start DNS server"
 
 # # Troubleshoot DNS server if it fails to start
 # if ! systemctl is-active --quiet named; then
