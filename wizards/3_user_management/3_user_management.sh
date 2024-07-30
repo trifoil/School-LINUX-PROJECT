@@ -22,8 +22,8 @@ display_menu() {
 }
 
 ip_set(){
-    $INTERFACE=$1
-    $ADDRESS=$2
+    INTERFACE=$1
+    ADDRESS=$2
     nmcli connection modify "$INTERFACE" ipv4.method manual
     nmcli connection modify "$INTERFACE" ipv4.addresses "$ADDRESS/24"
     nmcli connection up "$INTERFACE"
