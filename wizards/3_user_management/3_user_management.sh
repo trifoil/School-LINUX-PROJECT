@@ -27,6 +27,10 @@ ip_set(){
     nmcli connection modify "$INTERFACE" ipv4.method manual
     nmcli connection modify "$INTERFACE" ipv4.addresses "$ADDRESS/24"
     nmcli connection up "$INTERFACE"
+    echo "Done..."
+    echo "Press any key to continue..."
+    read -n 1 -s key
+	clear
 }
 
 backup_file(){
