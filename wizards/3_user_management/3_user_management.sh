@@ -21,27 +21,28 @@ display_menu() {
     echo ""
 }
 
+ip_set(){
+    $INTERFACE=$1
+    $ADDRESS=$2
+    nmcli connection modify $INTERFACE ipv4.method manual
+    nmcli connection modify $INTERFACE ipv4.addresses $ADDRESS/24
+    nmcli connection up $INTERFACE
+}
 
 backup_file(){
-
     # Define the named.conf file path
     ORIGINAL_FILE=$1
-
     # Check if the named.conf file exists
     if [ ! -f "$ORIGINAL_FILE" ]; then
         echo "Error: $ORIGINAL_FILE does not exist."
         exit 1
     fi
-
     # Create a timestamp
     TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-
     # Define the backup file name
     BACKUP_FILE="/etc/named.conf.backup.$TIMESTAMP"
-
     # Rename the named.conf to the backup file
     mv "$ORIGINAL_FILE" "$BACKUP_FILE"
-
     # Check if the rename was successful
     if [ $? -eq 0 ]; then
         echo "Successfully backed up $ORIGINAL_FILE to $BACKUP_FILE"
@@ -52,23 +53,31 @@ backup_file(){
 }
 
 enable_dns(){
-echo "installing bind..."
-dnf install bind bind-utils -y
 
-backup_file "/etc/named.conf"
-cp wizards/3_user_management/configs/named.conf /etc/named.conf
+    echo "Warning ! you will loose connectivity with the server if you are connected over the network"
+    read -p "Enter the server's desired IP addr: " IP_ADDRESS
+    nmcli device status
+    read -p "Enter the desired interface" INTERFACE
+
+    ip_set $INTERFACE $IP_ADDRESS
+
+    echo "installing bind..."
+    dnf install bind bind-utils -y
+
+    backup_file "/etc/named.conf"
+    cp wizards/3_user_management/configs/named.conf /etc/named.conf
 
 
-echo "adding firewall rules..."
-firewall-cmd --permanent --add-service=dns
-firewall-cmd --reload
-systemctl enable --now named
+    echo "adding firewall rules..."
+    firewall-cmd --permanent --add-service=dns
+    firewall-cmd --reload
+    systemctl enable --now named
 
 
-# bash -c 'cat > /etc/named.conf <<EOF
-# # 
-# # 
-# # EOF'
+    # bash -c 'cat > /etc/named.conf <<EOF
+    # # 
+    # # 
+    # # EOF'
 
 }
 
