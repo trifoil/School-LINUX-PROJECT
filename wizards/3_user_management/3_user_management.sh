@@ -25,11 +25,11 @@ display_menu() {
 backup_file(){
 
     # Define the named.conf file path
-    NAMED_CONF=$1
+    ORIGINAL_FILE=$1
 
     # Check if the named.conf file exists
-    if [ ! -f "$NAMED_CONF" ]; then
-        echo "Error: $NAMED_CONF does not exist."
+    if [ ! -f "$ORIGINAL_FILE" ]; then
+        echo "Error: $ORIGINAL_FILE does not exist."
         exit 1
     fi
 
@@ -40,13 +40,13 @@ backup_file(){
     BACKUP_FILE="/etc/named.conf.backup.$TIMESTAMP"
 
     # Rename the named.conf to the backup file
-    mv "$NAMED_CONF" "$BACKUP_FILE"
+    mv "$ORIGINAL_FILE" "$BACKUP_FILE"
 
     # Check if the rename was successful
     if [ $? -eq 0 ]; then
-        echo "Successfully backed up $NAMED_CONF to $BACKUP_FILE"
+        echo "Successfully backed up $ORIGINAL_FILE to $BACKUP_FILE"
     else
-        echo "Error: Failed to back up $NAMED_CONF"
+        echo "Error: Failed to back up $ORIGINAL_FILE"
         exit 1
     fi
 }
