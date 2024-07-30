@@ -14,7 +14,7 @@ display_menu() {
     echo "| 1. Add User                                                          |"
     echo "| 2. Remove User                                                       |"
     echo "| 3. Test                                                              |"
-    echo "| 4. DNS enable                                                              |"
+    echo "| 4. Enable DNS                                                        |"
     echo "|----------------------------------------------------------------------|"
     echo "| q. Quit                                                              |"
     echo "|----------------------------------------------------------------------|"
@@ -273,7 +273,7 @@ main() {
             1) add ;;
             2) remove ;;
             3) test ;;
-            4) dns_enable ;;
+            4) enable_dns ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac
