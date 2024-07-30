@@ -71,7 +71,7 @@ systemctl enable --now named
 }
 
 disable_dns(){
-
+    echo "disabling DNS"
 }
 
 test(){
