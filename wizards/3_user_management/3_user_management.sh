@@ -56,7 +56,7 @@ echo "installing bind..."
 dnf install bind bind-utils -y
 
 backup_file "/etc/named.conf"
-cp configs/named.conf /etc/named.conf
+cp wizards/3_user_management/configs/named.conf /etc/named.conf
 
 
 echo "adding firewall rules..."
