@@ -24,9 +24,9 @@ display_menu() {
 ip_set(){
     $INTERFACE=$1
     $ADDRESS=$2
-    nmcli connection modify $INTERFACE ipv4.method manual
-    nmcli connection modify $INTERFACE ipv4.addresses $ADDRESS/24
-    nmcli connection up $INTERFACE
+    nmcli connection modify "$INTERFACE" ipv4.method manual
+    nmcli connection modify "$INTERFACE" ipv4.addresses "$ADDRESS/24"
+    nmcli connection up "$INTERFACE"
 }
 
 backup_file(){
@@ -59,7 +59,7 @@ enable_dns(){
     nmcli device status
     read -p "Enter the desired interface" INTERFACE
 
-    ip_set $INTERFACE $IP_ADDRESS
+    ip_set "$INTERFACE" "$IP_ADDRESS"
 
     echo "installing bind..."
     dnf install bind bind-utils -y
