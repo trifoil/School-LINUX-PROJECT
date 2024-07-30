@@ -415,6 +415,7 @@ Pour démonter le directory en NFS :
 
 
 \subsection{Connexion par SSH}
+\newpage
 \subsection{Gestion des utilisateurs}
 
 De loin la partie la plus difficile, qui comporte plusieurs parties :
@@ -431,6 +432,22 @@ De loin la partie la plus difficile, qui comporte plusieurs parties :
 \item Ajout du mail
 \end{itemize}
 \end{itemize}
+
+\subsubsection{IP fixe}
+
+Pour avoir un DNS fonctionnel, il est impératif d'avoir une addresse IP fixe, dans j'utiliserai donc toujours la même IP tout au long du projet. J'ai donc choisi \texttt{192.168.1.69}, avec comme réseau local : \texttt{192.168.1.0/24}.
+
+
+Le script va donc renommer le fichier de configuration original avec un timestamp comme backup, et ajouter le nouveau fichier de configuration.
+
+
+
+Comme on n'utilise que de l'IPv4, le script rajoute la ligne \texttt{OPTIONS="-4"} à la fin du fichier \texttt{/etc/sysconfig/named}.
+
+\subsubsection{Gestion DNS interne}
+
+On utilise le package BIND. Son fichier de configuration est \texttt{/etc/named.conf}.
+
 
 \subsection{Serveur temps}
 \subsection{Plan de sauvegarde}
