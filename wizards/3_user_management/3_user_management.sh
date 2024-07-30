@@ -24,31 +24,31 @@ display_menu() {
 
 backup_file(){
 
-# Define the named.conf file path
-NAMED_CONF=$1
+    # Define the named.conf file path
+    NAMED_CONF=$1
 
-# Check if the named.conf file exists
-if [ ! -f "$NAMED_CONF" ]; then
-    echo "Error: $NAMED_CONF does not exist."
-    exit 1
-fi
+    # Check if the named.conf file exists
+    if [ ! -f "$NAMED_CONF" ]; then
+        echo "Error: $NAMED_CONF does not exist."
+        exit 1
+    fi
 
-# Create a timestamp
-TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+    # Create a timestamp
+    TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 
-# Define the backup file name
-BACKUP_FILE="/etc/named.conf.backup.$TIMESTAMP"
+    # Define the backup file name
+    BACKUP_FILE="/etc/named.conf.backup.$TIMESTAMP"
 
-# Rename the named.conf to the backup file
-mv "$NAMED_CONF" "$BACKUP_FILE"
+    # Rename the named.conf to the backup file
+    mv "$NAMED_CONF" "$BACKUP_FILE"
 
-# Check if the rename was successful
-if [ $? -eq 0 ]; then
-    echo "Successfully backed up $NAMED_CONF to $BACKUP_FILE"
-else
-    echo "Error: Failed to back up $NAMED_CONF"
-    exit 1
-fi
+    # Check if the rename was successful
+    if [ $? -eq 0 ]; then
+        echo "Successfully backed up $NAMED_CONF to $BACKUP_FILE"
+    else
+        echo "Error: Failed to back up $NAMED_CONF"
+        exit 1
+    fi
 }
 
 enable_dns(){
@@ -56,6 +56,8 @@ echo "installing bind..."
 dnf install bind bind-utils -y
 
 backup_file "/etc/named.conf"
+cp configs/named.conf /etc/named.conf
+
 
 echo "adding firewall rules..."
 firewall-cmd --permanent --add-service=dns
