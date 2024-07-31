@@ -2,6 +2,10 @@
 
 dnf install httpd -y
 
+systemctl enable --now httpd 
+firewall-cmd --add-service=http
+firewall-cmd --runtime-to-permanent 
+
 # Variables
 IP_ADDRESS="192.168.1.102"
 DOMAIN_NAME="trifoil.caca"
