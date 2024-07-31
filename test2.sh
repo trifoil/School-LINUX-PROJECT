@@ -1,5 +1,7 @@
 #!/bin/bash
 
+dnf install httpd -y
+
 # Variables
 IP_ADDRESS="192.168.1.102"
 DOMAIN_NAME="trifoil.caca"
