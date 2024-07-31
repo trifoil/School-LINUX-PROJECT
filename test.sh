@@ -1,7 +1,7 @@
 #!/bin/bash
 
 IP_ADDRESS="192.168.1.102"
-DOMAIN_NAME="trifoil.local"
+DOMAIN_NAME="trifoil.caca"
 NETWORK=$(echo $IP_ADDRESS | cut -d"." -f1-3).0/24
 REVERSE_ZONE=$(echo $IP_ADDRESS | awk -F. '{print $3"."$2"."$1".in-addr.arpa"}')
 REVERSE_IP=$(echo $IP_ADDRESS | awk -F. '{print $4}')
