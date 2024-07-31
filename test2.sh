@@ -1,117 +1,64 @@
 #!/bin/bash
 
-# Usage function
-usage() {
-    echo "Usage: $0 <IP_ADDRESS> <DOMAIN_NAME>"
-    exit 1
-}
-
-# Check if IP address and domain name are provided
-if [ $# -ne 2 ]; then
-    usage
-fi
-
-IP_ADDRESS=$1
-DOMAIN_NAME=$2
+# Variables
+IP_ADDRESS="192.168.1.102"
+DOMAIN_NAME="trifoil.caca"
 NETWORK=$(echo $IP_ADDRESS | cut -d"." -f1-3).0/24
 REVERSE_ZONE=$(echo $IP_ADDRESS | awk -F. '{print $3"."$2"."$1".in-addr.arpa"}')
 REVERSE_IP=$(echo $IP_ADDRESS | awk -F. '{print $4}')
+CUSTOMER_NAME="$1"
+WEB_SUBDOMAIN="$CUSTOMER_NAME.$DOMAIN_NAME"
 
-# Install BIND
-dnf -y install bind bind-utils
+if [ -z "$CUSTOMER_NAME" ]; then
+    echo "Usage: $0 <customer_name>"
+    exit 1
+fi
 
-# Configure /etc/named.conf
-cat <<EOL > /etc/named.conf
-acl internal-network {
-        $NETWORK;
-};
-
-options {
-        listen-on port 53 { any; };
-        listen-on-v6 { none; };
-        directory       "/var/named";
-        dump-file       "/var/named/data/cache_dump.db";
-        statistics-file "/var/named/data/named_stats.txt";
-        memstatistics-file "/var/named/data/named_mem_stats.txt";
-        secroots-file   "/var/named/data/named.secroots";
-        recursing-file  "/var/named/data/named.recursing";
-        allow-query     { localhost; internal-network; };
-        allow-transfer  { localhost; };
-        recursion yes;
-        dnssec-validation yes;
-        managed-keys-directory "/var/named/dynamic";
-        pid-file "/run/named/named.pid";
-        session-keyfile "/run/named/session.key";
-        include "/etc/crypto-policies/back-ends/bind.config";
-};
-
-logging {
-        channel default_debug {
-                file "data/named.run";
-                severity dynamic;
-        };
-};
-
-zone "." IN {
-        type hint;
-        file "named.ca";
-};
-
-include "/etc/named.rfc1912.zones";
-include "/etc/named.root.key";
-
-zone "$DOMAIN_NAME" IN {
-        type primary;
-        file "$DOMAIN_NAME.lan";
-        allow-update { none; };
-};
-
-zone "$REVERSE_ZONE" IN {
-        type primary;
-        file "$REVERSE_ZONE.db";
-        allow-update { none; };
-};
+# Function to update DNS zone files
+update_dns_zones() {
+    # Update forward zone
+    cat <<EOL >> /var/named/$DOMAIN_NAME.lan
+$CUSTOMER_NAME IN  A   $IP_ADDRESS
 EOL
 
-# Configure /etc/sysconfig/named to use only IPv4
-echo 'OPTIONS="-4"' >> /etc/sysconfig/named
-
-# Create the zone files
-cat <<EOL > /var/named/$DOMAIN_NAME.lan
-\$TTL 86400
-@   IN  SOA ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
-               $(date +%Y%m%d%H) ; Serial
-               3600       ; Refresh
-               1800       ; Retry
-               604800     ; Expire
-               86400 )    ; Minimum TTL
-@       IN  NS  ns.$DOMAIN_NAME.
-ns      IN  A   $IP_ADDRESS
+    # Update reverse zone
+    cat <<EOL >> /var/named/$REVERSE_ZONE.db
+$REVERSE_IP.$CUSTOMER_NAME IN  PTR $WEB_SUBDOMAIN.
 EOL
 
-cat <<EOL > /var/named/$REVERSE_ZONE.db
-\$TTL 86400
-@   IN  SOA ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
-               $(date +%Y%m%d%H) ; Serial
-               3600       ; Refresh
-               1800       ; Retry
-               604800     ; Expire
-               86400 )    ; Minimum TTL
-@       IN  NS  ns.$DOMAIN_NAME.
-$REVERSE_IP      IN  PTR ns.$DOMAIN_NAME.
+    # Reload named service
+    systemctl reload named
+}
+
+# Function to create Apache virtual host
+create_apache_vhost() {
+    # Configure Apache virtual host
+    cat <<EOL > /etc/httpd/conf.d/$WEB_SUBDOMAIN.conf
+<VirtualHost *:80>
+    ServerName $WEB_SUBDOMAIN
+    DocumentRoot /var/www/$WEB_SUBDOMAIN
+    <Directory /var/www/$WEB_SUBDOMAIN>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    ErrorLog /var/log/httpd/$WEB_SUBDOMAIN-error.log
+    CustomLog /var/log/httpd/$WEB_SUBDOMAIN-access.log combined
+</VirtualHost>
 EOL
 
-# Start and enable BIND
-systemctl start named
-systemctl enable named
+    # Create document root and a sample index.html
+    mkdir -p /var/www/$WEB_SUBDOMAIN
+    echo "<html><body><h1>Welcome to $CUSTOMER_NAME's website at $WEB_SUBDOMAIN</h1></body></html>" > /var/www/$WEB_SUBDOMAIN/index.html
 
-# Open firewall ports for DNS
-firewall-cmd --add-service=dns --permanent
-firewall-cmd --reload
+    # Set proper permissions
+    chown -R apache:apache /var/www/$WEB_SUBDOMAIN
 
-# Verify BIND configuration
-named-checkconf
-named-checkzone $DOMAIN_NAME /var/named/$DOMAIN_NAME.lan
-named-checkzone $REVERSE_ZONE /var/named/$REVERSE_ZONE.db
+    # Reload Apache to apply the new configuration
+    systemctl reload httpd
+}
 
-echo "BIND configuration completed successfully."
+# Main execution
+update_dns_zones
+create_apache_vhost
+
+echo "Website configuration for $WEB_SUBDOMAIN completed successfully."

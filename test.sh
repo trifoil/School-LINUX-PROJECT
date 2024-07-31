@@ -27,6 +27,7 @@ options {
         allow-query     { localhost; internal-network; };
         allow-transfer  { localhost; };
         recursion yes;
+        dnssec-enable yes;
         dnssec-validation yes;
         managed-keys-directory "/var/named/dynamic";
         pid-file "/run/named/named.pid";
