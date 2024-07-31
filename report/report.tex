@@ -438,16 +438,23 @@ De loin la partie la plus difficile, qui comporte plusieurs parties :
 Pour avoir un DNS fonctionnel, il est impératif d'avoir une addresse IP fixe, dans j'utiliserai donc toujours la même IP tout au long du projet. J'ai donc choisi \texttt{192.168.1.69}, avec comme réseau local : \texttt{192.168.1.0/24}.
 
 
-Le script va donc renommer le fichier de configuration original avec un timestamp comme backup, et ajouter le nouveau fichier de configuration.
 
-
-
-Comme on n'utilise que de l'IPv4, le script rajoute la ligne \texttt{OPTIONS="-4"} à la fin du fichier \texttt{/etc/sysconfig/named}.
 
 \subsubsection{Gestion DNS interne}
 
 On utilise le package BIND. Son fichier de configuration est \texttt{/etc/named.conf}.
 
+Le script va donc renommer le fichier de configuration original avec un timestamp comme backup, et ajouter le nouveau fichier de configuration.
+
+Comme on n'utilise que de l'IPv4, le script rajoute la ligne \texttt{OPTIONS="-4"} à la fin du fichier \texttt{/etc/sysconfig/named}.
+
+Le fichier de configuration \texttt{/etc/named.conf} doit renvoyer vers deux fichiers de configuration de zones : une zone en forward et une zone en reverse.
+
+La zone en forward contient un A record afin de pouvoir associer une IP locale avec le nom de domaine.
+
+La zone en reverse quant à elle contient un PTR record afin d'associer le nom de domaine à l'IP choisie.
+
+Comme nom de domaine en local, nous utiliserons \texttt{trifoil.local}.
 
 \subsection{Serveur temps}
 \subsection{Plan de sauvegarde}

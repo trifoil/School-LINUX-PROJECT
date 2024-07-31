@@ -1,7 +1,18 @@
 #!/bin/bash
 
-IP_ADDRESS="192.168.1.102"
-DOMAIN_NAME="trifoil.local"
+# Usage function
+usage() {
+    echo "Usage: $0 <IP_ADDRESS> <DOMAIN_NAME>"
+    exit 1
+}
+
+# Check if IP address and domain name are provided
+if [ $# -ne 2 ]; then
+    usage
+fi
+
+IP_ADDRESS=$1
+DOMAIN_NAME=$2
 NETWORK=$(echo $IP_ADDRESS | cut -d"." -f1-3).0/24
 REVERSE_ZONE=$(echo $IP_ADDRESS | awk -F. '{print $3"."$2"."$1".in-addr.arpa"}')
 REVERSE_IP=$(echo $IP_ADDRESS | awk -F. '{print $4}')
