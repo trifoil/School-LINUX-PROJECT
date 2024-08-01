@@ -58,6 +58,8 @@ backup_file(){
 
 
 basic_dns(){
+    firewall-cmd --add-service=dns --permanent
+    firewall-cmd --reload
     IP_ADDRESS=$1
     SERVERNAME=$2
     DOMAIN_NAME=$3
