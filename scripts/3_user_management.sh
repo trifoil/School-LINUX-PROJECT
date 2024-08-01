@@ -96,7 +96,7 @@ echo 'OPTIONS="-4"' >> /etc/sysconfig/named
 
 # Create the zone files
 cat <<EOL > /var/named/forward.$DOMAIN_NAME
-$TTL 86400
+\$TTL 86400
 @   IN  SOA     ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
             2024052101 ; Serial
             3600       ; Refresh
@@ -110,7 +110,7 @@ ns      IN  A       $IP_ADDRESS
 EOL
 
 cat <<EOL > /var/named/reverse.$DOMAIN_NAME
-$TTL 86400
+\$TTL 86400
 @   IN  SOA     ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
             2024052101 ; Serial
             3600       ; Refresh
