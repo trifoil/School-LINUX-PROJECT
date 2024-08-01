@@ -120,31 +120,31 @@ EOL
 
 cat << EOL > /var/named/$SERVERNAME.forward
 \$TTL 86400
-@   IN  SOA     $DOMAIN. root.$SERVERNAME.$DOMAIN. (
+@   IN  SOA     $DOMAIN_NAME. root.$SERVERNAME.$DOMAIN_NAME. (
         2023022101  ;Serial
         3600        ;Refresh
         1800        ;Retry
         604800      ;Expire
         86400       ;Minimum TTL
 )
-        IN  NS      $SERVERNAME.$DOMAIN.
-        IN  A       $IPADD
+        IN  NS      $SERVERNAME.$DOMAIN_NAME.
+        IN  A       $IP_ADDRESS
 
-$SERVERNAME.$DOMAIN     IN  A       $IPADD
+$SERVERNAME.$DOMAIN_NAME     IN  A       $IP_ADDRESS
 EOL
 
 cat << EOL > /var/named/$SERVERNAME.reversed
 \$TTL 86400
-@   IN  SOA    $DOMAIN. root.$SERVERNAME.$DOMAIN. (
+@   IN  SOA    $DOMAIN_NAME. root.$SERVERNAME.$DOMAIN_NAME. (
         2023022101  ;Serial
         3600        ;Refresh
         1800        ;Retry
         604800      ;Expire
         86400       ;Minimum TTL
 )
-        IN  NS      $SERVERNAME.$DOMAIN.
+        IN  NS      $SERVERNAME.$DOMAIN_NAME.
 
-$LAST8BITS      IN  PTR     $SERVERNAME.$DOMAIN.
+$LAST8BITS      IN  PTR     $SERVERNAME.$DOMAIN_NAME.
 EOL
 
 echo 'OPTIONS="-4"' >> /etc/sysconfig/named
