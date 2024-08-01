@@ -61,12 +61,20 @@ basic_dns(){
     firewall-cmd --add-service=dns --permanent
     firewall-cmd --reload
     IP_ADDRESS=$1
-    SERVERNAME=$2
-    DOMAIN_NAME=$3
+    DOMAIN_NAME=$2
+    NETWORK=$(echo $IP_ADDRESS | cut -d"." -f1-3).0/24
+    REVERSE_ZONE=$(echo $IP_ADDRESS | awk -F. '{print $3"."$2"."$1".in-addr.arpa"}')
+    REVERSE_IP=$(echo $IP_ADDRESS | awk -F. '{print $4}')
     backup_file "/etc/named.conf"
+    dnf -y install bind bind-utils
+
     cat <<EOL > /etc/named.conf
+acl internal-network {
+        $NETWORK;
+};
+
 options {
-        listen-on port 53 { $IP_ADDRESS; };
+        listen-on port 53 { any; };
         listen-on-v6 { none; };
         directory       "/var/named";
         dump-file       "/var/named/data/cache_dump.db";
@@ -78,12 +86,6 @@ options {
         allow-transfer  { localhost; };
         recursion yes;
         dnssec-validation yes;
-
-        forwarders {
-                8.8.8.8;  // Serveur DNS Google
-                1.1.1.1;  // Serveur DNS Cloudflare
-        };
-
         managed-keys-directory "/var/named/dynamic";
         pid-file "/run/named/named.pid";
         session-keyfile "/run/named/session.key";
@@ -105,62 +107,61 @@ zone "." IN {
 include "/etc/named.rfc1912.zones";
 include "/etc/named.root.key";
 
-zone "$SERVERNAME.$DOMAIN_NAME" IN {
-        type master;
-        file "$SERVERNAME.forward";
-        allow-update {none; };
+zone "$DOMAIN_NAME" IN {
+        type primary;
+        file "$DOMAIN_NAME.forward";
+        allow-update { none; };
 };
 
-zone "1.168.192.in-addr.arpa" IN {
-        type master;
-        file "$SERVERNAME.reversed";
-        allow-update {none;};
+zone "$REVERSE_ZONE" IN {
+        type primary;
+        file "$REVERSE_ZONE.reverse";
+        allow-update { none; };
 };
 EOL
 
-cat << EOL > /var/named/$SERVERNAME.forward
-\$TTL 86400
-@   IN  SOA     $DOMAIN_NAME. root.$SERVERNAME.$DOMAIN_NAME. (
-        2023022101  ;Serial
-        3600        ;Refresh
-        1800        ;Retry
-        604800      ;Expire
-        86400       ;Minimum TTL
-)
-        IN  NS      $SERVERNAME.$DOMAIN_NAME.
-        IN  A       $IP_ADDRESS
-
-$SERVERNAME.$DOMAIN_NAME     IN  A       $IP_ADDRESS
-EOL
-
-cat << EOL > /var/named/$SERVERNAME.reversed
-\$TTL 86400
-@   IN  SOA    $DOMAIN_NAME. root.$SERVERNAME.$DOMAIN_NAME. (
-        2023022101  ;Serial
-        3600        ;Refresh
-        1800        ;Retry
-        604800      ;Expire
-        86400       ;Minimum TTL
-)
-        IN  NS      $SERVERNAME.$DOMAIN_NAME.
-
-$LAST8BITS      IN  PTR     $SERVERNAME.$DOMAIN_NAME.
-EOL
-
+# Configure /etc/sysconfig/named to use only IPv4
 echo 'OPTIONS="-4"' >> /etc/sysconfig/named
 
-chown named:named /var/named/$SERVERNAME.forward
-chmod 640 /var/named/$SERVERNAME.forward
-chown named:named /var/named/$SERVERNAME.reversed
-chmod 640 /var/named/$SERVERNAME.reversed
+# Create the zone files
+cat <<EOL > /var/named/$DOMAIN_NAME.forward
+\$TTL 86400
+@   IN  SOA ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
+               $(date +%Y%m%d%H) ; Serial
+               3600       ; Refresh
+               1800       ; Retry
+               604800     ; Expire
+               86400 )    ; Minimum TTL
+@       IN  NS  ns.$DOMAIN_NAME.
+ns      IN  A   $IP_ADDRESS
+EOL
 
-# Rechargement du cache DNS chaque heure
-bash -c "(crontab -l 2>/dev/null; echo '0 * * * *  rndc dumpdb -cache') | crontab -"
-bash -c "(crontab -l 2>/dev/null; echo '* 17 * * *  rndc flush') | crontab -"
+cat <<EOL > /var/named/$REVERSE_ZONE.reverse
+\$TTL 86400
+@   IN  SOA ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
+               $(date +%Y%m%d%H) ; Serial
+               3600       ; Refresh
+               1800       ; Retry
+               604800     ; Expire
+               86400 )    ; Minimum TTL
+@       IN  NS  ns.$DOMAIN_NAME.
+$REVERSE_IP      IN  PTR ns.$DOMAIN_NAME.
+EOL
 
-systemctl restart named 
+    systemctl start named
+    systemctl enable named
+    # chown named:named /var/named/$SERVERNAME.forward
+    # chmod 640 /var/named/$SERVERNAME.forward
+    # chown named:named /var/named/$SERVERNAME.reverse
+    # chmod 640 /var/named/$SERVERNAME.reversed
 
-echo "nameserver $IP_ADDRESS" > /etc/resolv.conf
+    # Rechargement du cache DNS chaque heure
+    bash -c "(crontab -l 2>/dev/null; echo '0 * * * *  rndc dumpdb -cache') | crontab -"
+    bash -c "(crontab -l 2>/dev/null; echo '* 17 * * *  rndc flush') | crontab -"
+
+    systemctl restart named 
+
+    echo "nameserver $IP_ADDRESS" > /etc/resolv.conf
 }
 
 
