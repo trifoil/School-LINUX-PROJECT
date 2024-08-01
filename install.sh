@@ -11,6 +11,8 @@ systemctl enable --now cockpit.socket
 firewall-cmd --permanent --zone=public --add-service=cockpit
 firewall-cmd --reload
 dnf -y install nfs-utils samba bind chrony fail2ban vsftpd rsync clamav clamd clamav-update
+chmod +x -R scripts
+
 
 # Function to display the menu
 display_menu() {
@@ -34,42 +36,35 @@ display_menu() {
 }
 
 raid(){
-    . wizards/0_raid/0_raid.sh
+    . scripts/0_raid.sh
 }
 
 ssh(){
-    chmod +x wizards/1_ssh/1_ssh.sh
-    sh wizards/1_ssh/1_ssh.sh
+    sh scripts/1_ssh.sh
 }
 
 unauthshare(){
-    chmod +x wizards/2_unauth_share/2_unauth_share.sh
-    sh wizards/2_unauth_share/2_unauth_share.sh
+    sh scripts/2_unauth_share.sh
 }
 
 usersmanagement(){
-    chmod +x wizards/3_user_management/3_user_management.sh
-    sh wizards/3_user_management/3_user_management.sh
+    sh scripts/3_user_management.sh
 }
 
 ntp(){
-    chmod +x wizards/4_ntp_server.sh
-    sh wizards/4_ntp_server.sh
+    sh scripts/4_ntp_server.sh
 }
 
 security(){
-    chmod +x wizards/5_security.sh
-    sh wizards/5_security.sh
+    sh scripts/5_security.sh
 }
 
 backup(){
-    chmod +x wizards/6_backup.sh
-    sh wizards/6_backup.sh
+    sh scripts/6_backup.sh
 }
 
 logs(){
-    chmod +x wizards/7_logs.sh
-    sh wizards/7_logs.sh
+    sh scripts/7_logs.sh
 }
 
 # Main function
