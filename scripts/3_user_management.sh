@@ -170,9 +170,8 @@ EOL
 basic_setup(){
     echo "Installing required components"
     read -p "Enter the IP address : " IP_ADDRESS
-    read -p "Enter the server name : " SERVERNAME
     read -p "Enter the server domain name : " DOMAIN_NAME
-    basic_dns $IP_ADDRESS $SERVERNAME $DOMAIN_NAME
+    basic_dns $IP_ADDRESS $DOMAIN_NAME
     echo "main DNS configuration done ... "
 }
 
