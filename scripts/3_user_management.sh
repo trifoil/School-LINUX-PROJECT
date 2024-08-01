@@ -144,6 +144,9 @@ basic_setup(){
     read -p "Enter the server domain name : " DOMAIN_NAME
     basic_dns $IP_ADDRESS $DOMAIN_NAME
     echo "main DNS configuration done ... "
+    echo "Press any key to exit..."
+    read -n 1 -s key
+    clear
 }
 
 add_user(){
