@@ -68,55 +68,26 @@ basic_dns(){
     backup_file "/etc/named.conf"
     dnf -y install bind bind-utils
 
-    cat <<EOL > /etc/named.conf
-acl internal-network {
-        $NETWORK;
-};
-
+cat <<EOL > /etc/named.conf
 options {
-        listen-on port 53 { any; };
-        listen-on-v6 { none; };
-        directory       "/var/named";
-        dump-file       "/var/named/data/cache_dump.db";
-        statistics-file "/var/named/data/named_stats.txt";
-        memstatistics-file "/var/named/data/named_mem_stats.txt";
-        secroots-file   "/var/named/data/named.secroots";
-        recursing-file  "/var/named/data/named.recursing";
-        allow-query     { localhost; internal-network; };
-        allow-transfer  { localhost; };
-        recursion yes;
-        dnssec-validation yes;
-        managed-keys-directory "/var/named/dynamic";
-        pid-file "/run/named/named.pid";
-        session-keyfile "/run/named/session.key";
-        include "/etc/crypto-policies/back-ends/bind.config";
+    directory "/var/named";
+    dump-file "/var/named/data/cache_dump.db";
+    statistics-file "/var/named/data/named_stats.txt";
+    memstatistics-file "/var/named/data/named_mem_stats.txt";
+    allow-query { any; };
+    recursion yes;
 };
-
-logging {
-        channel default_debug {
-                file "data/named.run";
-                severity dynamic;
-        };
-};
-
-zone "." IN {
-        type hint;
-        file "named.ca";
-};
-
-include "/etc/named.rfc1912.zones";
-include "/etc/named.root.key";
 
 zone "$DOMAIN_NAME" IN {
-        type primary;
-        file "$DOMAIN_NAME.forward";
-        allow-update { none; };
+    type master;
+    file "forward.$DOMAIN_NAME";
+    allow-update { none; };
 };
 
 zone "$REVERSE_ZONE" IN {
-        type primary;
-        file "$REVERSE_ZONE.reverse";
-        allow-update { none; };
+    type master;
+    file "reverse.$DOMAIN_NAME";
+    allow-update { none; };
 };
 EOL
 
@@ -124,30 +95,31 @@ EOL
 echo 'OPTIONS="-4"' >> /etc/sysconfig/named
 
 # Create the zone files
-cat <<EOL > /var/named/$DOMAIN_NAME.forward
-\$TTL 86400
-@   IN  SOA ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
-               $(date +%Y%m%d%H) ; Serial
-               3600       ; Refresh
-               1800       ; Retry
-               604800     ; Expire
-               86400 )    ; Minimum TTL
-@       IN  NS  ns.$DOMAIN_NAME.
-ns      IN  A   $IP_ADDRESS
-@       IN  NS  $IP_ADDRESS
-
+cat <<EOL > /var/named/forward.$DOMAIN_NAME
+$TTL 86400
+@   IN  SOA     ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
+            2024052101 ; Serial
+            3600       ; Refresh
+            1800       ; Retry
+            604800     ; Expire
+            86400 )    ; Minimum TTL
+;
+@       IN  NS      ns.$DOMAIN_NAME.
+ns      IN  A       $IP_ADDRESS
+@       IN  A       $IP_ADDRESS
 EOL
 
-cat <<EOL > /var/named/$REVERSE_ZONE.reverse
-\$TTL 86400
-@   IN  SOA ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
-               $(date +%Y%m%d%H) ; Serial
-               3600       ; Refresh
-               1800       ; Retry
-               604800     ; Expire
-               86400 )    ; Minimum TTL
-@       IN  NS  ns.$DOMAIN_NAME.
-$REVERSE_IP      IN  PTR ns.$DOMAIN_NAME.
+cat <<EOL > /var/named/reverse.$DOMAIN_NAME
+$TTL 86400
+@   IN  SOA     ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
+            2024052101 ; Serial
+            3600       ; Refresh
+            1800       ; Retry
+            604800     ; Expire
+            86400 )    ; Minimum TTL
+;
+@       IN  NS      ns.$DOMAIN_NAME.
+2       IN  PTR     $DOMAIN_NAME.
 EOL
 
     systemctl start named
@@ -158,11 +130,10 @@ EOL
     # chmod 640 /var/named/$SERVERNAME.reversed
 
     # Rechargement du cache DNS chaque heure
-    bash -c "(crontab -l 2>/dev/null; echo '0 * * * *  rndc dumpdb -cache') | crontab -"
-    bash -c "(crontab -l 2>/dev/null; echo '* 17 * * *  rndc flush') | crontab -"
+    #bash -c "(crontab -l 2>/dev/null; echo '0 * * * *  rndc dumpdb -cache') | crontab -"
+    #bash -c "(crontab -l 2>/dev/null; echo '* 17 * * *  rndc flush') | crontab -"
 
     systemctl restart named 
-
     echo "nameserver $IP_ADDRESS" > /etc/resolv.conf
 }
 
