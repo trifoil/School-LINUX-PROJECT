@@ -167,7 +167,6 @@ basic_setup(){
     read -p "Enter the IP address : " IP_ADDRESS
     read -p "Enter the server name : " SERVERNAME
     read -p "Enter the server domain name : " DOMAIN_NAME
-    dnf install -y bind bind-utils httpd php php-mysqlnd mariadb-server phpmyadmin vsftpd samba
     basic_dns $IP_ADDRESS $SERVERNAME $DOMAIN_NAME
     echo "main DNS configuration done ... "
 }
