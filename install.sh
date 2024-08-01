@@ -13,6 +13,7 @@ firewall-cmd --reload
 dnf -y install nfs-utils samba bind chrony fail2ban vsftpd rsync clamav clamd clamav-update
 chmod +x -R scripts
 
+clear
 
 # Function to display the menu
 display_menu() {
