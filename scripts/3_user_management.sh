@@ -134,6 +134,8 @@ cat <<EOL > /var/named/$DOMAIN_NAME.forward
                86400 )    ; Minimum TTL
 @       IN  NS  ns.$DOMAIN_NAME.
 ns      IN  A   $IP_ADDRESS
+@       IN  NS  $IP_ADDRESS
+
 EOL
 
 cat <<EOL > /var/named/$REVERSE_ZONE.reverse
