@@ -10,6 +10,7 @@ updatedb
 systemctl enable --now cockpit.socket
 firewall-cmd --permanent --zone=public --add-service=cockpit
 firewall-cmd --reload
+dnf -y install nfs-utils samba bind chrony fail2ban vsftpd rsync clamav clamd clamav-update
 
 # Function to display the menu
 display_menu() {
