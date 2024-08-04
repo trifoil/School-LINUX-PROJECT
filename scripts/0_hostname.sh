@@ -15,7 +15,7 @@ display_menu() {
 }
 
 display_menu
-read -p "Enter your choice (q to abort) : " choice
+read -p "Enter your choice (q to abort) : " HOSTNAME
 case $HOSTNAME in
             q|Q) clear && echo "Exiting ... " && exit ;;
             *) hostname $HOSTNAME && echo "Done" && exit;;
