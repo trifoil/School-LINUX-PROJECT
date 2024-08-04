@@ -55,24 +55,28 @@ unauthshare(){
     sh scripts/3_unauth_share.sh
 }
 
+webservices(){
+    sh scripts/4_web_services.sh
+}
+
 usersmanagement(){
-    sh scripts/4_user_management.sh
+    sh scripts/5_user_management.sh
 }
 
 ntp(){
-    sh scripts/5_ntp_server.sh
+    sh scripts/6_ntp_server.sh
 }
 
 security(){
-    sh scripts/6_security.sh
+    sh scripts/7_security.sh
 }
 
 backup(){
-    sh scripts/7_backup.sh
+    sh scripts/8_backup.sh
 }
 
 logs(){
-    sh scripts/8_logs.sh
+    sh scripts/9_logs.sh
 }
 
 # Main function
@@ -86,11 +90,12 @@ main() {
             1) raid ;;
             2) ssh ;;
             3) unauthshare ;;
-            4) usersmanagement ;;
-            5) ntp ;;
-            6) security ;;
-            7) backup ;;
-            8) logs ;;
+            4) webservices ;;
+            5) usersmanagement ;;
+            6) ntp ;;
+            7) security ;;
+            8) backup ;;
+            9) logs ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac
