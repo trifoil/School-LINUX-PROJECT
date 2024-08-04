@@ -10,9 +10,7 @@ display_menu() {
     echo -e "|                ${BLUE}Welcome To The User Management Menu ${NC}                  |"
     echo "|               Please select the tool you want to use                 |"
     echo "|----------------------------------------------------------------------|"
-    echo "| 0. Basic setup                                                       |"
-    echo "| 1. Add User                                                          |"
-    echo "| 2. Remove User                                                       |"
+    echo "| 0. Basic setup (main DNS, web, DB)                                   |"
     echo "|----------------------------------------------------------------------|"
     echo "| q. Quit                                                              |"
     echo "|----------------------------------------------------------------------|"
@@ -151,7 +149,9 @@ basic_setup(){
     read -p "Enter the IP address : " IP_ADDRESS
     read -p "Enter the server domain name : " DOMAIN_NAME
     basic_dns $IP_ADDRESS $DOMAIN_NAME
-    echo "main DNS configuration done ... "
+    echo "Main DNS configuration done ... "
+    echo "Installing basic website ... "
+    basic_website 
     echo "Press any key to exit..."
     read -n 1 -s key
     clear
