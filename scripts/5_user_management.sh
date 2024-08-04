@@ -30,20 +30,28 @@ remove_directory(){
     rm -rf "/mnt/raid5_web/$1"
 }
 
-add_website(){
+add_quota(){
+    echo "Adding quota ... "
+}
 
+remove_quota(){
+    echo "Removing quota ... "
+}
+
+add_website(){
+    echo "Adding user website ... "s
 }
 
 remove_website(){
-
+    echo "Removing user website ... "
 }
 
 add_db(){
-
+    echo "Adding user DB ... "
 }
 
 remove_db(){
-    
+    echo "Removing user DB ... "
 }
 
 # ---------------
@@ -52,6 +60,7 @@ remove_db(){
 
 add_user(){
     read -p "Input a username : " USERNAME
+    read -p "Input a quota : " QUOTA
     echo "Adding user ... "
     create_directory $USERNAME
     
