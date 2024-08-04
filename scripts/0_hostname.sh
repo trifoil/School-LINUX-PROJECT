@@ -1,6 +1,8 @@
 #!/bin/bash
 
 BLUE='\e[38;5;33m'
+NC='\033[0m' # No Color
+
 CURRENT_HOSTNAME=$(hostname)
 
 display_menu() {
