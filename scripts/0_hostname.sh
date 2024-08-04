@@ -1,5 +1,7 @@
 #!/bin/bash
 
+clear
+
 BLUE='\e[38;5;33m'
 NC='\033[0m' # No Color
 
