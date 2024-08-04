@@ -29,10 +29,22 @@ add_user(){
     read -p "Input a username : " USERNAME
     echo "Adding user ... "
     create_directory $USERNAME
+    
+    echo "Done."
+    echo "Press any key to continue..."
+    read -n 1 -s key
+	clear
 }
 
 remove_user(){
+    read -p "Input a username : " USERNAME
     echo "Removing user ... "
+    remove_directory $USERNAME
+    
+    echo "Done."
+    echo "Press any key to continue..."
+    read -n 1 -s key
+	clear
 }
 
 main() {
