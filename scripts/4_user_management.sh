@@ -137,6 +137,14 @@ EOL
     echo "nameserver $IP_ADDRESS" > /etc/resolv.conf
 }
 
+basic_website(){
+    echo "Installing main page"
+    systemctl start httpd
+    systemctl enable httpd
+    rm /etc/httpd/conf.d/welcome.conf
+    
+}
+
 
 basic_setup(){
     echo "Installing required components"
@@ -162,11 +170,14 @@ add_user(){
     echo "smb user created"
 }
 
+
+
 remove_user(){
     echo "Removing an user ... "
     echo "Users list : "
     pdbedit -L
     read -p "Enter a user to delete: " USERNAME
+    
 }
 
 main() {
