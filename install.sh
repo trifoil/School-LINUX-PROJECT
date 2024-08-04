@@ -77,6 +77,7 @@ logs(){
 # Main function
 main() {
     while true; do
+        clear
         display_menu
         read -p "Enter your choice: " choice
         case $choice in
