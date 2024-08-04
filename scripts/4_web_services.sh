@@ -1,7 +1,7 @@
 #!/bin/bash
 
-BLUE='\e[38;5;33m' #Red
-NC='\033[0m' # No Color
+BLUE='\e[38;5;33m'
+NC='\033[0m'
 
 clear
 display_menu() {
