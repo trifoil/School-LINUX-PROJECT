@@ -126,6 +126,11 @@ basic_website(){
     echo "<html><body><h1>Welcome to main.$DOMAIN_NAME</h1></body></html>" > /mnt/raid5_web/main/index.html
     echo "<html><body><h1>Welcome to secondpage.$DOMAIN_NAME</h1></body></html>" > /mnt/raid5_web/secondpage/index.html
 
+    # Set ownership and permissions
+    chown -R apache:apache /mnt/raid5_web/main
+    chown -R apache:apache /mnt/raid5_web/secondpage
+    chmod -R 755 /mnt/raid5_web
+
     # Set up virtual hosts
     cat <<EOL > /etc/httpd/conf.d/main.conf
 <VirtualHost *:80>
