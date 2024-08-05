@@ -91,11 +91,6 @@ logging {
                 severity dynamic;
         };
 
-zone "." IN {
-        type hint;
-        file "named.ca";
-};
-
 zone "$DOMAIN_NAME" IN {
     type master;
     file "forward.$DOMAIN_NAME";
