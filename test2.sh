@@ -165,7 +165,7 @@ cat << EOL > /etc/httpd/conf.d/main.conf
 </VirtualHost>  
 ServerTokens Prod                       
 EOL
-
+mkdir /mnt/raid5_web/main/
 touch /mnt/raid5_web/main/index.html
 cat << EOL > /mnt/raid5_web/main/index.html
 <!DOCTYPE html>
