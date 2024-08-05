@@ -83,6 +83,10 @@ testing(){
     sh test.sh
 }
 
+testing2(){
+    sh test2.sh
+}
+
 # Main function
 main() {
     while true; do
@@ -101,6 +105,7 @@ main() {
             8) backup ;;
             9) logs ;;
             10) testing ;;
+            11) testing2 ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac
