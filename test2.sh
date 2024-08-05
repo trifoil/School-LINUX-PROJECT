@@ -17,19 +17,6 @@ display_menu() {
     echo ""
 }
 
-ip_set(){
-    INTERFACE=$1
-    ADDRESS=$2
-    nmcli connection modify "$INTERFACE" ipv4.method manual
-    nmcli connection modify "$INTERFACE" ipv4.addresses "$ADDRESS/24"
-    nmcli connection up "$INTERFACE"
-    arping -c 3 -I $INTERFACE $ADDRESS
-    echo "Done..."
-    echo "Press any key to continue..."
-    read -n 1 -s key
-	clear
-}
-
 backup_file(){
     # Define the named.conf file path
     ORIGINAL_FILE=$1
@@ -54,7 +41,6 @@ backup_file(){
     fi
 }
 
-
 basic_dns(){
     firewall-cmd --add-service=dns --permanent
     firewall-cmd --reload
@@ -68,49 +54,13 @@ basic_dns(){
 
 cat <<EOL > /etc/named.conf
 options {
-        listen-on port 53 { any; };
-        // change if need ( if not listen IPv6, set [none] )
-        listen-on-v6 { any; };
-        directory       "/var/named";
-        dump-file       "/var/named/data/cache_dump.db";
-        statistics-file "/var/named/data/named_stats.txt";
-        memstatistics-file "/var/named/data/named_mem_stats.txt";
-        secroots-file   "/var/named/data/named.secroots";
-        recursing-file  "/var/named/data/named.recursing";
-        // add local network set on [acl] section above
-        // network range you allow to receive queries from hosts
-        allow-query     { localhost; internal-network; };
-        // network range you allow to transfer zone files to clients
-        // add secondary DNS servers if it exist
-        allow-transfer  { localhost; };
-        recursion yes;
-
-        dnssec-enable yes;
-        dnssec-validation yes;
-
-        managed-keys-directory "/var/named/dynamic";
-
-        pid-file "/run/named/named.pid";
-        session-keyfile "/run/named/session.key";
-
-        /* https://fedoraproject.org/wiki/Changes/CryptoPolicy */
-        include "/etc/crypto-policies/back-ends/bind.config";
+    directory "/var/named";
+    dump-file "/var/named/data/cache_dump.db";
+    statistics-file "/var/named/data/named_stats.txt";
+    memstatistics-file "/var/named/data/named_mem_stats.txt";
+    allow-query { any; };
+    recursion yes;
 };
-
-logging {
-        channel default_debug {
-                file "data/named.run";
-                severity dynamic;
-        };
-};
-
-zone "." IN {
-        type hint;
-        file "named.ca";
-};
-
-include "/etc/named.rfc1912.zones";
-include "/etc/named.root.key";
 
 zone "$DOMAIN_NAME" IN {
     type master;
@@ -138,8 +88,11 @@ cat <<EOL > /var/named/forward.$DOMAIN_NAME
             604800     ; Expire
             86400 )    ; Minimum TTL
 ;
-        IN  NS      ns.$DOMAIN_NAME.
-        IN  A       $IP_ADDRESS
+@       IN  NS      ns.$DOMAIN_NAME.
+ns      IN  A       $IP_ADDRESS
+@       IN  A       $IP_ADDRESS
+main    IN  A       $IP_ADDRESS
+secondpage IN A     $IP_ADDRESS
 EOL
 
 cat <<EOL > /var/named/reverse.$DOMAIN_NAME
@@ -157,68 +110,56 @@ EOL
 
     systemctl start named
     systemctl enable named
-    # chown named:named /var/named/$SERVERNAME.forward
-    # chmod 640 /var/named/$SERVERNAME.forward
-    # chown named:named /var/named/$SERVERNAME.reverse
-    # chmod 640 /var/named/$SERVERNAME.reversed
-
-    # Rechargement du cache DNS chaque heure
-    #bash -c "(crontab -l 2>/dev/null; echo '0 * * * *  rndc dumpdb -cache') | crontab -"
-    #bash -c "(crontab -l 2>/dev/null; echo '* 17 * * *  rndc flush') | crontab -"
-
     systemctl restart named 
     echo "nameserver $IP_ADDRESS" > /etc/resolv.conf
 }
 
 basic_website(){
-    IP_ADDRESS=$1
-    DOMAIN_NAME=$2
-    echo "Installing main page"
+    DOMAIN_NAME=$1
+    dnf -y install httpd
+
+    # Create directories for the websites
+    mkdir -p /mnt/raid5_web/main
+    mkdir -p /mnt/raid5_web/secondpage
+
+    # Create a simple index.html for both websites
+    echo "<html><body><h1>Welcome to main.$DOMAIN_NAME</h1></body></html>" > /mnt/raid5_web/main/index.html
+    echo "<html><body><h1>Welcome to secondpage.$DOMAIN_NAME</h1></body></html>" > /mnt/raid5_web/secondpage/index.html
+
+    # Set up virtual hosts
+    cat <<EOL > /etc/httpd/conf.d/main.conf
+<VirtualHost *:80>
+    ServerName main.$DOMAIN_NAME
+    DocumentRoot /mnt/raid5_web/main
+    <Directory /mnt/raid5_web/main>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    ErrorLog /var/log/httpd/main_error.log
+    CustomLog /var/log/httpd/main_access.log combined
+</VirtualHost>
+EOL
+
+    cat <<EOL > /etc/httpd/conf.d/secondpage.conf
+<VirtualHost *:80>
+    ServerName secondpage.$DOMAIN_NAME
+    DocumentRoot /mnt/raid5_web/secondpage
+    <Directory /mnt/raid5_web/secondpage>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    ErrorLog /var/log/httpd/secondpage_error.log
+    CustomLog /var/log/httpd/secondpage_access.log combined
+</VirtualHost>
+EOL
+
     systemctl start httpd
     systemctl enable httpd
-    rm /etc/httpd/conf.d/welcome.conf
-    HTTPD_CONF="/etc/httpd/conf/httpd.conf"
-    sed -i '100s/.*/ServerName thato.trifoil:80/' $HTTPD_CONF
-    sed -i '149s/.*/Options FollowSymLinks/' $HTTPD_CONF
-    sed -i '156s/.*/AllowOverride All/' $HTTPD_CONF
-    sed -i '169s/.*/DirectoryIndex index.html index.php index.cgi/' $HTTPD_CONF
-    echo "# server's response header" >> $HTTPD_CONF
-    echo "ServerTokens Prod" >> $HTTPD_CONF
+    systemctl restart httpd
 
-cat << EOL > /etc/httpd/conf.d/main.conf
-<VirtualHost *:80>
-    ServerName $DOMAIN_NAME
-    ServerAlias www.main.$DOMAIN_NAME
-    Redirect permanent / https://main.$DOMAIN_NAME/
-</VirtualHost>
-<VirtualHost _default_:443>
-    ServerName main.$DOMAIN_NAME
-    DocumentRoot /mnt/raid5_web/main/
-    SSLEngine On
-    SSLCertificateFile /etc/ssl/certs/httpd-selfsigned.crt
-    SSLCertificateKeyFile /etc/ssl/certs/httpd-selfsigned.key
-</VirtualHost>  
-ServerTokens Prod                       
-EOL
-mkdir /mnt/raid5_web/main/
-touch /mnt/raid5_web/main/index.html
-cat << EOL > /mnt/raid5_web/main/index.html
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <title>Page principale</title>
-    </head>
-    <body>
-        <h1>Bienvenue sur la page principale</h1>
-    </body>
-</html>
-EOL
-
-    firewall-cmd --add-service=http
-    firewall-cmd --runtime-to-permanent
+    firewall-cmd --add-service=http --permanent
+    firewall-cmd --reload
 }
-
 
 basic_setup(){
     echo "Installing required components"
@@ -226,34 +167,13 @@ basic_setup(){
     read -p "Enter the server domain name : " DOMAIN_NAME
     basic_dns $IP_ADDRESS $DOMAIN_NAME
     echo "Main DNS configuration done ... "
-    echo "Installing basic website ... "
-    basic_website 
+
+    basic_website $DOMAIN_NAME
+    echo "Web server configuration done ... "
+
     echo "Press any key to exit..."
     read -n 1 -s key
     clear
-}
-
-add_user(){
-    echo "Adding an user ..."
-    read -p "Enter a username: " USERNAME
-    read -sp "Enter a password: " PASSWORD
-    DIR="/mnt/raid5_web/$USERNAME"
-    mkdir -p "$DIR"
-    echo "Created $DIR directory ... " 
-    useradd $USERNAME
-    echo "unix user created"
-    smbpasswd -a $USERNAME
-    echo "smb user created"
-}
-
-
-
-remove_user(){
-    echo "Removing an user ... "
-    echo "Users list : "
-    pdbedit -L
-    read -p "Enter a user to delete: " USERNAME
-    
 }
 
 main() {
@@ -262,8 +182,6 @@ main() {
         read -p "Enter your choice: " choice
         case $choice in
             0) basic_setup ;;
-            1) add_user ;;
-            2) remove_user ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac
