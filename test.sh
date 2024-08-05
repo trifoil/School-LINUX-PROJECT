@@ -91,7 +91,7 @@ generate_ssl_certificate(){
     mkdir -p /etc/ssl/certs
     mkdir -p /etc/ssl/private
     openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
-        -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=$DOMAIN_NAME" \
+        -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=$1" \
         -keyout /etc/ssl/private/httpd-selfsigned.key -out /etc/ssl/certs/httpd-selfsigned.crt
 }
 
@@ -115,7 +115,7 @@ basic_website(){
         exit 1
     fi
 
-    generate_ssl_certificate
+    generate_ssl_certificate "$DOMAIN_NAME"
 
     systemctl start httpd
     systemctl enable httpd
