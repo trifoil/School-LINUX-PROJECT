@@ -62,7 +62,7 @@ smb(){
     chown -R nobody:nobody /mnt/raid5_share
     chmod -R 0777 /mnt/raid5_share
     
-    cp wizards/2_unauth_share.conf /etc/samba/smb.unauth.conf
+    cp 3_unauth_share.conf /etc/samba/smb.unauth.conf
     
     PRIMARY_CONF="/etc/samba/smb.conf"
     INCLUDE_LINE="include = /etc/samba/smb.unauth.conf"
