@@ -14,3 +14,5 @@ https://www.server-world.info/en/note?os=Fedora_40&p=dns&f=1
 ## Report 
 
 ## Hell yea 🤘
+
+sudo nano /etc/resolv.conf

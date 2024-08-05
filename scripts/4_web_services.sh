@@ -136,11 +136,51 @@ EOL
 }
 
 basic_website(){
+    IP_ADDRESS=$1
+    DOMAIN_NAME=$2
     echo "Installing main page"
     systemctl start httpd
     systemctl enable httpd
     rm /etc/httpd/conf.d/welcome.conf
-    
+    HTTPD_CONF="/etc/httpd/conf/httpd.conf"
+    sed -i '100s/.*/ServerName thato.trifoil:80/' $HTTPD_CONF
+    sed -i '149s/.*/Options FollowSymLinks/' $HTTPD_CONF
+    sed -i '156s/.*/AllowOverride All/' $HTTPD_CONF
+    sed -i '169s/.*/DirectoryIndex index.html index.php index.cgi/' $HTTPD_CONF
+    echo "# server's response header" >> $HTTPD_CONF
+    echo "ServerTokens Prod" >> $HTTPD_CONF
+
+cat << EOL > /etc/httpd/conf.d/main.conf
+<VirtualHost *:80>
+    ServerName $DOMAIN_NAME
+    ServerAlias www.main.$DOMAIN_NAME
+    Redirect permanent / https://main.$DOMAIN_NAME/
+</VirtualHost>
+<VirtualHost _default_:443>
+    ServerName main.$DOMAIN_NAME
+    DocumentRoot /mnt/raid5_web/main/
+    SSLEngine On
+    SSLCertificateFile /etc/ssl/certs/httpd-selfsigned.crt
+    SSLCertificateKeyFile /etc/ssl/certs/httpd-selfsigned.key
+</VirtualHost>  
+ServerTokens Prod                       
+EOL
+
+cat << EOL > /mnt/raid5_web/main/index.html
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Page principale</title>
+    </head>
+    <body>
+        <h1>Bienvenue sur la page principale</h1>
+    </body>
+</html>
+EOL
+
+    firewall-cmd --add-service=http
+    firewall-cmd --runtime-to-permanent
 }
 
 
