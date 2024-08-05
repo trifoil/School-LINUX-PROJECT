@@ -112,6 +112,11 @@ EOL
     systemctl enable named
     systemctl restart named 
     echo "nameserver $IP_ADDRESS" > /etc/resolv.conf
+
+    # Verify DNS Configuration
+    echo "Verifying DNS Configuration..."
+    host main.$DOMAIN_NAME
+    host secondpage.$DOMAIN_NAME
 }
 
 basic_website(){
@@ -129,6 +134,9 @@ basic_website(){
     # Set ownership and permissions
     chown -R apache:apache /mnt/raid5_web/main
     chown -R apache:apache /mnt/raid5_web/secondpage
+    chcon -R --type=httpd_sys_content_t /mnt/raid5_web/main
+    chcon -R --type=httpd_sys_content_t /mnt/raid5_web/secondpage
+
     chmod -R 755 /mnt/raid5_web
 
     # Set up virtual hosts
@@ -164,6 +172,11 @@ EOL
 
     firewall-cmd --add-service=http --permanent
     firewall-cmd --reload
+
+    # Verify HTTP Access
+    echo "Verifying HTTP Access..."
+    curl http://main.$DOMAIN_NAME
+    curl http://secondpage.$DOMAIN_NAME
 }
 
 basic_setup(){
@@ -187,8 +200,8 @@ main() {
         read -p "Enter your choice: " choice
         case $choice in
             0) basic_setup ;;
-            q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
-            *) clear && echo "Invalid choice. Please enter a valid option." ;;
+            q|Q) clear && exit 0 ;;
+            *) echo "Invalid choice. Please try again." ;;
         esac
     done
 }
