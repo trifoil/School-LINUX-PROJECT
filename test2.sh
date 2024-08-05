@@ -117,7 +117,7 @@ cat <<EOL > /var/named/reverse.$DOMAIN_NAME
             86400 )    ; Minimum TTL
 ;
 @       IN  NS      ns.$DOMAIN_NAME.
-2       IN  PTR     $DOMAIN_NAME.
+$REVERSE_IP       IN  PTR     $DOMAIN_NAME.
 EOL
 
     systemctl start named
