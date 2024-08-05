@@ -65,6 +65,18 @@ options {
     recursion yes;
 };
 
+logging {
+        channel default_debug {
+                file "data/named.run";
+                severity dynamic;
+        };
+};
+
+zone "." IN {
+        type hint;
+        file "named.ca";
+};
+
 zone "$DOMAIN_NAME" IN {
     type master;
     file "forward.$DOMAIN_NAME";
