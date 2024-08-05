@@ -68,13 +68,49 @@ basic_dns(){
 
 cat <<EOL > /etc/named.conf
 options {
-    directory "/var/named";
-    dump-file "/var/named/data/cache_dump.db";
-    statistics-file "/var/named/data/named_stats.txt";
-    memstatistics-file "/var/named/data/named_mem_stats.txt";
-    allow-query { any; };
-    recursion yes;
+        listen-on port 53 { any; };
+        // change if need ( if not listen IPv6, set [none] )
+        listen-on-v6 { any; };
+        directory       "/var/named";
+        dump-file       "/var/named/data/cache_dump.db";
+        statistics-file "/var/named/data/named_stats.txt";
+        memstatistics-file "/var/named/data/named_mem_stats.txt";
+        secroots-file   "/var/named/data/named.secroots";
+        recursing-file  "/var/named/data/named.recursing";
+        // add local network set on [acl] section above
+        // network range you allow to receive queries from hosts
+        allow-query     { localhost; internal-network; };
+        // network range you allow to transfer zone files to clients
+        // add secondary DNS servers if it exist
+        allow-transfer  { localhost; };
+        recursion yes;
+
+        dnssec-enable yes;
+        dnssec-validation yes;
+
+        managed-keys-directory "/var/named/dynamic";
+
+        pid-file "/run/named/named.pid";
+        session-keyfile "/run/named/session.key";
+
+        /* https://fedoraproject.org/wiki/Changes/CryptoPolicy */
+        include "/etc/crypto-policies/back-ends/bind.config";
 };
+
+logging {
+        channel default_debug {
+                file "data/named.run";
+                severity dynamic;
+        };
+};
+
+zone "." IN {
+        type hint;
+        file "named.ca";
+};
+
+include "/etc/named.rfc1912.zones";
+include "/etc/named.root.key";
 
 zone "$DOMAIN_NAME" IN {
     type master;
@@ -102,9 +138,8 @@ cat <<EOL > /var/named/forward.$DOMAIN_NAME
             604800     ; Expire
             86400 )    ; Minimum TTL
 ;
-@       IN  NS      ns.$DOMAIN_NAME.
-ns      IN  A       $IP_ADDRESS
-@       IN  A       $IP_ADDRESS
+        IN  NS      ns.$DOMAIN_NAME.
+        IN  A       $IP_ADDRESS
 EOL
 
 cat <<EOL > /var/named/reverse.$DOMAIN_NAME
