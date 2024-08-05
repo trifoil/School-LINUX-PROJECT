@@ -166,6 +166,7 @@ cat << EOL > /etc/httpd/conf.d/main.conf
 ServerTokens Prod                       
 EOL
 
+touch /mnt/raid5_web/main/index.html
 cat << EOL > /mnt/raid5_web/main/index.html
 <!DOCTYPE html>
 <html>
