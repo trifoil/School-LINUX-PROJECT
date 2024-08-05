@@ -16,3 +16,14 @@ https://www.server-world.info/en/note?os=Fedora_40&p=dns&f=1
 ## Hell yea 🤘
 
 sudo nano /etc/resolv.conf
+
+
+
+```
+rm -rf git School-LINUX-PROJECT
+git clone https://github.com/trifoil/School-LINUX-PROJECT.git
+chmod +x -R School-LINUX-PROJECT
+cd School-LINUX-PROJECT
+sudo sh install.sh
+cd ..
+```
