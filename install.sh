@@ -79,6 +79,10 @@ logs(){
     sh scripts/9_logs.sh
 }
 
+testing(){
+    sh test.sh
+}
+
 # Main function
 main() {
     while true; do
@@ -96,6 +100,7 @@ main() {
             7) security ;;
             8) backup ;;
             9) logs ;;
+            10) testing ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac
