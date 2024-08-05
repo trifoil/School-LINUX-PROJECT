@@ -87,13 +87,44 @@ EOL
     echo "nameserver $IP_ADDRESS" > /etc/resolv.conf
 }
 
+generate_ssl_certificate(){
+    mkdir -p /etc/ssl/certs
+    mkdir -p /etc/ssl/private
+    openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
+        -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=$DOMAIN_NAME" \
+        -keyout /etc/ssl/private/httpd-selfsigned.key -out /etc/ssl/certs/httpd-selfsigned.crt
+}
+
 basic_website(){
     IP_ADDRESS=$1
     DOMAIN_NAME=$2
+
+    # Update system time
+    timedatectl set-ntp true
+    timedatectl set-timezone UTC
+    ntpdate pool.ntp.org
+
+    # Clean DNF cache
+    dnf clean packages
+    dnf clean metadata
+
+    # Install Apache and dependencies
     dnf -y install httpd mod_ssl
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to install Apache and dependencies."
+        exit 1
+    fi
+
+    generate_ssl_certificate
+
     systemctl start httpd
     systemctl enable httpd
-    rm /etc/httpd/conf.d/welcome.conf
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to start httpd service."
+        exit 1
+    fi
+
+    rm -f /etc/httpd/conf.d/welcome.conf
     HTTPD_CONF="/etc/httpd/conf/httpd.conf"
     sed -i "100s/.*/ServerName $DOMAIN_NAME:80/" $HTTPD_CONF
     sed -i '149s/.*/Options FollowSymLinks/' $HTTPD_CONF
@@ -114,7 +145,7 @@ basic_website(){
     DocumentRoot /mnt/raid5_web/main/
     SSLEngine On
     SSLCertificateFile /etc/ssl/certs/httpd-selfsigned.crt
-    SSLCertificateKeyFile /etc/ssl/certs/httpd-selfsigned.key
+    SSLCertificateKeyFile /etc/ssl/private/httpd-selfsigned.key
 </VirtualHost>  
 ServerTokens Prod                       
 EOL
@@ -136,6 +167,10 @@ EOL
     firewall-cmd --add-service=https --permanent
     firewall-cmd --reload
     systemctl restart httpd
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to restart httpd service."
+        exit 1
+    fi
 }
 
 add_user(){
