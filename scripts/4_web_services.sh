@@ -91,8 +91,8 @@ EOL
 
 # Configure /etc/sysconfig/named to use only IPv4
 echo 'OPTIONS="-4"' >> /etc/sysconfig/named
-echo "$IP_ADDRESS $DOMAIN_NAME" > /etc/hosts
-echo "$DOMAIN_NAME" > /etc/hostname
+echo "$IP_ADDRESS $DOMAIN_NAME" >> /etc/hosts
+echo "$DOMAIN_NAME" >> /etc/hostname
 # Create the zone files
 cat <<EOL > /var/named/forward.$DOMAIN_NAME
 \$TTL 86400
@@ -134,7 +134,7 @@ EOL
 
 
     systemctl restart named 
-    echo "nameserver $IP_ADDRESS" > /etc/resolv.conf
+    echo "nameserver $IP_ADDRESS" >> /etc/resolv.conf
 }
 
 basic_website(){
