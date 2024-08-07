@@ -131,6 +131,8 @@ EOL
     #bash -c "(crontab -l 2>/dev/null; echo '0 * * * *  rndc dumpdb -cache') | crontab -"
     #bash -c "(crontab -l 2>/dev/null; echo '* 17 * * *  rndc flush') | crontab -"
 
+    echo "$IP_ADDRESS $DOMAIN_NAME" > /etc/hosts
+
     systemctl restart named 
     echo "nameserver $IP_ADDRESS" > /etc/resolv.conf
 }
