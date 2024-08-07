@@ -104,10 +104,6 @@ zone "$REVERSE_ZONE" IN {
 };
 EOL
 
-# Configure /etc/sysconfig/named to use only IPv4
-echo 'OPTIONS="-4"' >> /etc/sysconfig/named
-echo "$IP_ADDRESS $DOMAIN_NAME" >> /etc/hosts
-echo "$DOMAIN_NAME" >> /etc/hostname
 # Create the zone files
 cat <<EOL > /var/named/forward.$DOMAIN_NAME
 \$TTL 86400
@@ -134,6 +130,20 @@ cat <<EOL > /var/named/reverse.$DOMAIN_NAME
 ;
 @       IN  NS      ns.$DOMAIN_NAME.
 $REVERSE_IP       IN  PTR     $DOMAIN_NAME.
+EOL
+
+# Configure /etc/sysconfig/named to use only IPv4
+echo 'OPTIONS="-4"' >> /etc/sysconfig/named
+#echo "$IP_ADDRESS $DOMAIN_NAME" >> /etc/hosts
+#echo "$DOMAIN_NAME" >> /etc/hostname
+
+cat <<EOL > /etc/hosts
+$IP_ADDRESS $DOMAIN_NAME
+127.0.0.1   $DOMAIN_NAME
+EOL
+
+cat <<EOL > /etc/hostname
+$DOMAIN_NAME
 EOL
 
     systemctl start named
