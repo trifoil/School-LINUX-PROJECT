@@ -167,52 +167,65 @@ search home.arpa
 EOL
 }
 
+
 basic_website(){
-    IP_ADDRESS=$1
-    DOMAIN_NAME=$2
-    echo "Installing main page"
+    DOMAIN_NAME=$1
+    dnf -y install httpd
+
+    # Create directories for the websites
+    mkdir -p /mnt/raid5_web/main
+    mkdir -p /mnt/raid5_web/secondpage
+
+    # Create a simple index.html for both websites
+    echo "<html><body><h1>Welcome to main.$DOMAIN_NAME</h1></body></html>" > /mnt/raid5_web/main/index.html
+    echo "<html><body><h1>Welcome to secondpage.$DOMAIN_NAME</h1></body></html>" > /mnt/raid5_web/secondpage/index.html
+
+    # Set ownership and permissions
+    chown -R apache:apache /mnt/raid5_web/main
+    chown -R apache:apache /mnt/raid5_web/secondpage
+    chcon -R --type=httpd_sys_content_t /mnt/raid5_web/main
+    chcon -R --type=httpd_sys_content_t /mnt/raid5_web/secondpage
+
+    chmod -R 755 /mnt/raid5_web
+
+    # Set up virtual hosts
+    cat <<EOL > /etc/httpd/conf.d/main.conf
+<VirtualHost *:80>
+    ServerName main.$DOMAIN_NAME
+    DocumentRoot /mnt/raid5_web/main
+    <Directory /mnt/raid5_web/main>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    ErrorLog /var/log/httpd/main_error.log
+    CustomLog /var/log/httpd/main_access.log combined
+</VirtualHost>
+EOL
+
+    cat <<EOL > /etc/httpd/conf.d/secondpage.conf
+<VirtualHost *:80>
+    ServerName secondpage.$DOMAIN_NAME
+    DocumentRoot /mnt/raid5_web/secondpage
+    <Directory /mnt/raid5_web/secondpage>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    ErrorLog /var/log/httpd/secondpage_error.log
+    CustomLog /var/log/httpd/secondpage_access.log combined
+</VirtualHost>
+EOL
+
     systemctl start httpd
     systemctl enable httpd
-    rm /etc/httpd/conf.d/welcome.conf
-    HTTPD_CONF="/etc/httpd/conf/httpd.conf"
-    sed -i '100s/.*/ServerName thato.trifoil:80/' $HTTPD_CONF
-    sed -i '149s/.*/Options FollowSymLinks/' $HTTPD_CONF
-    sed -i '156s/.*/AllowOverride All/' $HTTPD_CONF
-    sed -i '169s/.*/DirectoryIndex index.html index.php index.cgi/' $HTTPD_CONF
-    echo "# server's response header" >> $HTTPD_CONF
-    echo "ServerTokens Prod" >> $HTTPD_CONF
+    systemctl restart httpd
 
-cat << EOL > /etc/httpd/conf.d/main.conf
-<VirtualHost *:80>
-    ServerName $DOMAIN_NAME
-    ServerAlias www.main.$DOMAIN_NAME
-    Redirect permanent / https://main.$DOMAIN_NAME/
-</VirtualHost>
-<VirtualHost _default_:443>
-    ServerName main.$DOMAIN_NAME
-    DocumentRoot /mnt/raid5_web/main/
-    SSLEngine On
-    SSLCertificateFile /etc/ssl/certs/httpd-selfsigned.crt
-    SSLCertificateKeyFile /etc/ssl/certs/httpd-selfsigned.key
-</VirtualHost>  
-ServerTokens Prod                       
-EOL
+    firewall-cmd --add-service=http --permanent
+    firewall-cmd --reload
 
-cat << EOL > /mnt/raid5_web/main/index.html
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <title>Page principale</title>
-    </head>
-    <body>
-        <h1>Bienvenue sur la page principale</h1>
-    </body>
-</html>
-EOL
-
-    firewall-cmd --add-service=http
-    firewall-cmd --runtime-to-permanent
+    # Verify HTTP Access
+    echo "Verifying HTTP Access..."
+    curl http://main.$DOMAIN_NAME
+    curl http://secondpage.$DOMAIN_NAME
 }
 
 
@@ -224,6 +237,10 @@ basic_setup(){
     echo "Main DNS configuration done ... "
     #echo "Installing basic website ... "
     #basic_website 
+
+    basic_website $DOMAIN_NAME
+    echo "Web server configuration done ... "
+
     echo "Press any key to exit..."
     read -n 1 -s key
     clear
