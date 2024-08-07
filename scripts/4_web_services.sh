@@ -162,6 +162,8 @@ EOL
 #    echo "nameserver $IP_ADDRESS" >> /etc/resolv.conf
 cat <<EOL > /etc/resolv.conf
 nameserver  $DOMAIN_NAME
+options edns0 trust-ad
+search home.arpa
 EOL
 }
 
