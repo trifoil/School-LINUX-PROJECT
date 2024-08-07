@@ -127,6 +127,8 @@ EOL
     systemctl enable named
     systemctl restart named 
     echo "nameserver $IP_ADDRESS" > /etc/resolv.conf
+    echo "$IP_ADDRESS $DOMAIN_NAME" > /etc/hosts
+    echo "$DOMAIN_NAME" > /etc/hostname
 
     # Verify DNS Configuration
     echo "Verifying DNS Configuration..."
