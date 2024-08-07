@@ -159,7 +159,10 @@ EOL
 
 
     systemctl restart named 
-    echo "nameserver $IP_ADDRESS" >> /etc/resolv.conf
+#    echo "nameserver $IP_ADDRESS" >> /etc/resolv.conf
+cat <<EOL > /etc/resolv.conf
+nameserver  $DOMAIN_NAME
+EOL
 }
 
 basic_website(){
