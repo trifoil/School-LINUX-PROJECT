@@ -91,7 +91,8 @@ EOL
 
 # Configure /etc/sysconfig/named to use only IPv4
 echo 'OPTIONS="-4"' >> /etc/sysconfig/named
-
+echo "$IP_ADDRESS $DOMAIN_NAME" > /etc/hosts
+echo "$DOMAIN_NAME" > /etc/hostname
 # Create the zone files
 cat <<EOL > /var/named/forward.$DOMAIN_NAME
 \$TTL 86400
@@ -131,7 +132,6 @@ EOL
     #bash -c "(crontab -l 2>/dev/null; echo '0 * * * *  rndc dumpdb -cache') | crontab -"
     #bash -c "(crontab -l 2>/dev/null; echo '* 17 * * *  rndc flush') | crontab -"
 
-    echo "$IP_ADDRESS $DOMAIN_NAME" > /etc/hosts
 
     systemctl restart named 
     echo "nameserver $IP_ADDRESS" > /etc/resolv.conf
