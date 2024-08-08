@@ -416,7 +416,7 @@ Pour démonter le directory en NFS :
 
 \subsection{Connexion par SSH}
 \newpage
-\subsection{Gestion des utilisateurs}
+\subsection{Setup initial des services}
 
 De loin la partie la plus difficile, qui comporte plusieurs parties :
 \begin{itemize}
@@ -435,13 +435,9 @@ De loin la partie la plus difficile, qui comporte plusieurs parties :
 
 \subsubsection{IP fixe}
 
-\colorbox{yellow}{\textcolor{red}{!! FAUX, MODIFIER}}
+Au niveau de l'IP, comme c'est une démonstration, pas besoin de mettre une IP fixe, car l'addresse ne changera probablement pas vite.
 
-
-Pour avoir un DNS fonctionnel, il est impératif d'avoir une addresse IP fixe, dans j'utiliserai donc toujours la même IP tout au long du projet. J'ai donc choisi \texttt{192.168.1.69}, avec comme réseau local : \texttt{192.168.1.0/24}.
-
-
-
+Dans le cas ou l'on veut avoir une IP fixe, il faut modifier dans le routeur afin d'associer une IP à l'addresse MAC de notre machine, puis sur la machine, de lui spécifier la même adresse (en utilisant nmtui ou bien par l'interface web de cockpit).
 
 \subsubsection{Gestion DNS interne}
 
@@ -457,7 +453,25 @@ La zone en forward contient un A record afin de pouvoir associer une IP locale a
 
 La zone en reverse quant à elle contient un PTR record afin d'associer le nom de domaine à l'IP choisie.
 
-Comme nom de domaine en local, nous utiliserons \texttt{trifoil.local}.
+le script n°4 met à jour ces informations automatiquemeent pour autant qu'on lui fournisse la bonne adresse IP, et un nom de domaine correct. L'exemple utilisé lors des tests est test.toto.
+
+Attention ! Dans le cas de l'ajout d'un nouveau client Linux, ou dans le cas ou le serveur aurait été stoppé quand le client était encore connecté, il faut redémarrer le service NetworkManager!
+
+Il faut également au préalable prendre soin de rajouter l'adresse du serveur DNS dans nmtui.
+
+\subsubsection{Gestion du serveur web}
+
+Comme on planifie d'avoir plusieurs pages liées à des sous-domaines différents, on va travailler avec des hôtes virtuels. Ceux-ci permettent de choisir le port et le nom de sous-domaine. Le port choisi reste toujours le même.
+
+\subsubsection{Gestion de la base de données (serveur SQL)}
+
+\subsubsection{Gestion de la base de données (phpmyadmin)}
+
+\subsubsection{Gestion du mail}
+
+\subsection{Gestion des utilisateurs}
+
+
 
 \subsection{Serveur temps}
 \subsection{Plan de sauvegarde}

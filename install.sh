@@ -33,6 +33,7 @@ display_menu() {
     echo "| 7. Security Settings                                                 |"
     echo "| 8. Backup                                                            |"
     echo "| 9. Consult Logs Dashboard                                            |"
+    echo "| x. Testing                                                           |"
     echo "|----------------------------------------------------------------------|"
     echo "| q. Quit                                                              |"
     echo "|----------------------------------------------------------------------|"
@@ -80,12 +81,9 @@ logs(){
 }
 
 testing(){
-    sh test.sh
+    sh user_autom.sh
 }
 
-testing2(){
-    sh test2.sh
-}
 
 # Main function
 main() {
@@ -104,8 +102,7 @@ main() {
             7) security ;;
             8) backup ;;
             9) logs ;;
-            10) testing ;;
-            11) testing2 ;;
+            x) testing ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac
