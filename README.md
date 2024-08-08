@@ -32,3 +32,7 @@ cd ..
 
 http://test.toto
 test.toto
+
+ajouter le DNS dans nmtui sur la machine client
+
+!!! redémarrer NetworkManager sur la machine client dans le cas où le serveur aurait été déconnecté !!!
