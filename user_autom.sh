@@ -1,54 +1,44 @@
 #!/bin/bash
 
-# Variables
-read -p "Enter the username : " USERNAME
-read -p "Enter the server domain name : " DOMAIN_NAME
-
-# Check if a username was provided
-if [ -z "$USERNAME" ]; then
-    echo "Error: No username provided."
+# Check if user exists
+if id -u "$1" >/dev/null 2>&1; then
+    echo "User $1 already exists. Aborting."
     exit 1
 fi
 
-# Check if the user already exists
-if id "$USERNAME" &>/dev/null; then
-    echo "Error: User $USERNAME already exists."
-    exit 1
-fi
+USERNAME=$1
+PASSWORD=$2
+DOMAIN_NAME=$3
 
-# Add the user to the system
-useradd -m -s /bin/bash "$USERNAME"
-if [ $? -ne 0 ]; then
-    echo "Error: Failed to add Unix user."
-    exit 1
-fi
+# Add the user to Unix
+useradd -m "$USERNAME"
+echo "$USERNAME:$PASSWORD" | chpasswd
+echo "Unix user $USERNAME created."
 
-# Set a Samba password for the user
-(echo "password"; echo "password") | smbpasswd -a -s "$USERNAME"
-if [ $? -ne 0 ]; then
-    echo "Error: Failed to add Samba user."
-    exit 1
-fi
+# Add the user to Samba
+(echo "$PASSWORD"; echo "$PASSWORD") | smbpasswd -a "$USERNAME"
+echo "Samba user $USERNAME created."
 
-# Create the user's directory
+# Create user directory
 USER_DIR="/mnt/raid5_web/$USERNAME"
 mkdir -p "$USER_DIR"
 chown "$USERNAME:$USERNAME" "$USER_DIR"
 chmod 700 "$USER_DIR"
+echo "Directory $USER_DIR created."
 
 # Configure Samba share
-echo "[$USERNAME]
-    path = $USER_DIR
-    valid users = $USERNAME
-    read only = no
-    browsable = yes
-    create mask = 0700
-    directory mask = 0700" >> /etc/samba/smb.conf
+cat <<EOL >> /etc/samba/smb.conf
+
+[$USERNAME]
+   path = $USER_DIR
+   valid users = $USERNAME
+   read only = no
+EOL
 
 # Restart Samba to apply changes
 systemctl restart smb
 
-# Create Apache virtual host configuration
+# Create a VirtualHost for the user
 cat <<EOL > /etc/httpd/conf.d/$USERNAME.conf
 <VirtualHost *:80>
     ServerName $USERNAME.$DOMAIN_NAME
@@ -62,41 +52,26 @@ cat <<EOL > /etc/httpd/conf.d/$USERNAME.conf
 </VirtualHost>
 EOL
 
-echo "<html><body><h1>Welcome to $USERNAME.$DOMAIN_NAME</h1></body></html>" >  $USER_DIR/index.html
-
 # Restart Apache to apply changes
 systemctl restart httpd
+echo "VirtualHost for $USERNAME created."
 
-# Install necessary packages
-yum install -y php mariadb-server phpmyadmin httpd roundcubemail
-
-# Start and enable services
+# Install PHP, SQL server, phpMyAdmin
+dnf -y install php mariadb-server phpmyadmin
 systemctl start mariadb
 systemctl enable mariadb
-systemctl restart httpd
+mysql -e "CREATE USER '$USERNAME'@'localhost' IDENTIFIED BY '$PASSWORD';"
+mysql -e "GRANT ALL PRIVILEGES ON *.* TO '$USERNAME'@'localhost';"
+mysql -e "FLUSH PRIVILEGES;"
+echo "PHP, SQL server, and phpMyAdmin installed and configured."
 
-# Set up MySQL user and database
-MYSQL_ROOT_PASSWORD="rootpassword"
-MYSQL_USER_PASSWORD="userpassword"
+# Install and configure Roundcube
+dnf -y install roundcubemail
+systemctl start httpd
+mysql -e "CREATE DATABASE roundcube;"
+mysql -e "GRANT ALL PRIVILEGES ON roundcube.* TO 'roundcube'@'localhost' IDENTIFIED BY '$PASSWORD';"
+mysql -e "FLUSH PRIVILEGES;"
+/usr/share/roundcubemail/bin/updatedb.sh --dir /usr/share/roundcubemail/SQL --package roundcube
+echo "Roundcube installed and configured for $USERNAME."
 
-mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<MYSQL_SCRIPT
-CREATE DATABASE ${USERNAME}_db;
-CREATE USER '$USERNAME'@'localhost' IDENTIFIED BY '$MYSQL_USER_PASSWORD';
-GRANT ALL PRIVILEGES ON ${USERNAME}_db.* TO '$USERNAME'@'localhost';
-FLUSH PRIVILEGES;
-MYSQL_SCRIPT
-
-# Configure phpMyAdmin (optional: secure it)
-echo "Alias /phpmyadmin /usr/share/phpMyAdmin" >> /etc/httpd/conf.d/phpmyadmin.conf
-sed -i "s/^# \$dbuser =.*/\$dbuser = '$USERNAME';/g" /etc/phpMyAdmin/config.inc.php
-sed -i "s/^# \$dbpass =.*/\$dbpass = '$MYSQL_USER_PASSWORD';/g" /etc/phpMyAdmin/config.inc.php
-systemctl restart httpd
-
-# Configure Roundcube (optional: secure it)
-# Assuming roundcubemail is installed and configured
-
-# Add a webpage for the user
-echo "<html><body><h1>Welcome $USERNAME!</h1></body></html>" > "$USER_DIR/index.html"
-chown "$USERNAME:$USERNAME" "$USER_DIR/index.html"
-
-echo "Setup completed for user $USERNAME"
+echo "User $USERNAME setup completed."
