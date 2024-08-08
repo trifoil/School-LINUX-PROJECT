@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Variables
-USERNAME=$1
-DOMAIN_NAME="test.toto"
+read -p "Enter the username : " USERNAME
+read -p "Enter the server domain name : " DOMAIN_NAME
 
 # Check if a username was provided
 if [ -z "$USERNAME" ]; then
