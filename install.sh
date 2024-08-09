@@ -81,9 +81,8 @@ logs(){
 }
 
 testing(){
-    sh install.sh
+    sh test.sh
 }
-
 
 # Main function
 main() {
