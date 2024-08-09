@@ -230,11 +230,11 @@ EOL
 
 
 basic_db(){
-    
+    echo "beep"
 }
 
 basic_mail(){
-
+    echo "beep"
 }
 
 basic_setup(){
