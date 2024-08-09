@@ -147,91 +147,48 @@ search home.arpa
 EOL
 }
 
-# basic_website(){
-#     DOMAIN_NAME=$1
-#     dnf -y install httpd php php-mysqlnd
-
-#     mkdir -p /mnt/raid5_web/main
-#     mkdir -p /mnt/raid5_web/secondpage
-
-#     echo "<html><body><h1>Welcome to main.$DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/main/index.php
-#     echo "<html><body><h1>Welcome to secondpage.$DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/secondpage/index.php
-
-#     chown -R apache:apache /mnt/raid5_web/main
-#     chown -R apache:apache /mnt/raid5_web/secondpage
-#     chcon -R --type=httpd_sys_content_t /mnt/raid5_web/main
-#     chcon -R --type=httpd_sys_content_t /mnt/raid5_web/secondpage
-
-#     chmod -R 755 /mnt/raid5_web
-
-#     cat <<EOL > /etc/httpd/conf.d/main.conf
-# <VirtualHost *:80>
-#     ServerName main.$DOMAIN_NAME
-#     DocumentRoot /mnt/raid5_web/main
-#     <Directory /mnt/raid5_web/main>
-#         AllowOverride All
-#         Require all granted
-#     </Directory>
-#     DirectoryIndex index.php
-#     ErrorLog /var/log/httpd/main_error.log
-#     CustomLog /var/log/httpd/main_access.log combined
-# </VirtualHost>
-# EOL
-
-#     cat <<EOL > /etc/httpd/conf.d/secondpage.conf
-# <VirtualHost *:80>
-#     ServerName secondpage.$DOMAIN_NAME
-#     DocumentRoot /mnt/raid5_web/secondpage
-#     <Directory /mnt/raid5_web/secondpage>
-#         AllowOverride All
-#         Require all granted
-#     </Directory>
-#     DirectoryIndex index.php
-#     ErrorLog /var/log/httpd/secondpage_error.log
-#     CustomLog /var/log/httpd/secondpage_access.log combined
-# </VirtualHost>
-# EOL
-
-#     systemctl start httpd
-#     systemctl enable httpd
-#     systemctl restart httpd
-
-#     firewall-cmd --add-service=http --permanent
-#     firewall-cmd --reload
-
-#     echo "Verifying HTTP Access..."
-#     curl http://main.$DOMAIN_NAME
-#     curl http://secondpage.$DOMAIN_NAME
-# }
-
-basic_root_website(){
+basic_website(){
     DOMAIN_NAME=$1
-    dnf -y install httpd
+    dnf -y install httpd php php-mysqlnd
 
-    # Create the directory for the root website
-    mkdir -p /mnt/raid5_web/root
+    mkdir -p /mnt/raid5_web/main
+    mkdir -p /mnt/raid5_web/secondpage
 
-    # Create a simple index.php file for the root website
-    echo "<html><body><h1>Welcome to $DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/root/index.php
+    echo "<html><body><h1>Welcome to main.$DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/main/index.php
+    echo "<html><body><h1>Welcome to secondpage.$DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/secondpage/index.php
 
-    # Set ownership and permissions
-    chown -R apache:apache /mnt/raid5_web/root
-    chcon -R --type=httpd_sys_content_t /mnt/raid5_web/root
+    chown -R apache:apache /mnt/raid5_web/main
+    chown -R apache:apache /mnt/raid5_web/secondpage
+    chcon -R --type=httpd_sys_content_t /mnt/raid5_web/main
+    chcon -R --type=httpd_sys_content_t /mnt/raid5_web/secondpage
 
-    chmod -R 755 /mnt/raid5_web/root
+    chmod -R 755 /mnt/raid5_web
 
-    # Set up the virtual host for the root domain
-    cat <<EOL > /etc/httpd/conf.d/root.conf
+    cat <<EOL > /etc/httpd/conf.d/main.conf
 <VirtualHost *:80>
-    ServerName $DOMAIN_NAME
-    DocumentRoot /mnt/raid5_web/root
-    <Directory /mnt/raid5_web/root>
+    ServerName main.$DOMAIN_NAME
+    DocumentRoot /mnt/raid5_web/main
+    <Directory /mnt/raid5_web/main>
         AllowOverride All
         Require all granted
     </Directory>
     DirectoryIndex index.php
-    ErrorLog /var/log/httpd/root_error.log
-    CustomLog /var/log/httpd/root_access.log combined
+    ErrorLog /var/log/httpd/main_error.log
+    CustomLog /var/log/httpd/main_access.log combined
+</VirtualHost>
+EOL
+
+    cat <<EOL > /etc/httpd/conf.d/secondpage.conf
+<VirtualHost *:80>
+    ServerName secondpage.$DOMAIN_NAME
+    DocumentRoot /mnt/raid5_web/secondpage
+    <Directory /mnt/raid5_web/secondpage>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    DirectoryIndex index.php
+    ErrorLog /var/log/httpd/secondpage_error.log
+    CustomLog /var/log/httpd/secondpage_access.log combined
 </VirtualHost>
 EOL
 
@@ -242,11 +199,10 @@ EOL
     firewall-cmd --add-service=http --permanent
     firewall-cmd --reload
 
-    # Verify HTTP Access
     echo "Verifying HTTP Access..."
-    curl http://$DOMAIN_NAME
+    curl http://main.$DOMAIN_NAME
+    curl http://secondpage.$DOMAIN_NAME
 }
-
 
 basic_db(){
     DOMAIN_NAME=$1
@@ -275,31 +231,16 @@ EOF
     systemctl restart httpd
 }
 
-# basic_setup(){
-#     echo "Installing required components"
-#     read -p "Enter the IP address : " IP_ADDRESS
-#     read -p "Enter the server domain name : " DOMAIN_NAME
-#     basic_dns $IP_ADDRESS $DOMAIN_NAME
-#     echo "Main DNS configuration done ... "
-#     basic_website $DOMAIN_NAME
-#     echo "Web server configuration done ... "
-#     basic_db $DOMAIN_NAME
-#     echo "Database configuration done ... "
-#     echo "Press any key to exit..."
-#     read -n 1 -s key
-#     clear
-# }
-
 basic_setup(){
     echo "Installing required components"
     read -p "Enter the IP address : " IP_ADDRESS
-    read -p "Enter the server domain name (e.g., test.toto) : " DOMAIN_NAME
+    read -p "Enter the server domain name : " DOMAIN_NAME
     basic_dns $IP_ADDRESS $DOMAIN_NAME
     echo "Main DNS configuration done ... "
-
-    basic_root_website $DOMAIN_NAME
+    basic_website $DOMAIN_NAME
     echo "Web server configuration done ... "
-
+    basic_db $DOMAIN_NAME
+    echo "Database configuration done ... "
     echo "Press any key to exit..."
     read -n 1 -s key
     clear
