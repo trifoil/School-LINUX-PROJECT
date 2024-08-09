@@ -81,7 +81,7 @@ logs(){
 }
 
 testing(){
-    sh user_autom.sh
+    sh install.sh
 }
 
 
