@@ -11,8 +11,7 @@ display_menu() {
     echo "|               Please select the tool you want to use                 |"
     echo "|----------------------------------------------------------------------|"
     echo "| 0. Basic setup (main DNS, web, DB)                                   |"
-    echo "| 1. Add User                                                          |"
-    echo "| 2. Remove User                                                       |"
+    echo "|----------------------------------------------------------------------|"
     echo "| q. Quit                                                              |"
     echo "|----------------------------------------------------------------------|"
     echo ""
@@ -28,25 +27,19 @@ ip_set(){
     echo "Done..."
     echo "Press any key to continue..."
     read -n 1 -s key
-	clear
+    clear
 }
 
 backup_file(){
-    # Define the named.conf file path
     ORIGINAL_FILE=$1
-    # Check if the named.conf file exists
     if [ ! -f "$ORIGINAL_FILE" ]; then
         echo "Error: $ORIGINAL_FILE does not exist."
         exit 1
     fi
-    # Create a timestamp
     TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-    # Define the backup file name
     BACKUP_FILE="/etc/named.conf.bak.$TIMESTAMP"
-    # Rename the named.conf to the backup file
     mv "$ORIGINAL_FILE" "$BACKUP_FILE"
     touch "$ORIGINAL_FILE"
-    # Check if the rename was successful
     if [ $? -eq 0 ]; then
         echo "Successfully backed up $ORIGINAL_FILE to $BACKUP_FILE"
     else
@@ -54,7 +47,6 @@ backup_file(){
         exit 1
     fi
 }
-
 
 basic_dns(){
     firewall-cmd --add-service=dns --permanent
@@ -105,7 +97,6 @@ zone "$REVERSE_ZONE" IN {
 };
 EOL
 
-# Create the zone files
 cat <<EOL > /var/named/forward.$DOMAIN_NAME
 \$TTL 86400
 @   IN  SOA     ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
@@ -133,10 +124,7 @@ cat <<EOL > /var/named/reverse.$DOMAIN_NAME
 $REVERSE_IP       IN  PTR     $DOMAIN_NAME.
 EOL
 
-# Configure /etc/sysconfig/named to use only IPv4
 echo 'OPTIONS="-4"' >> /etc/sysconfig/named
-#echo "$IP_ADDRESS $DOMAIN_NAME" >> /etc/hosts
-#echo "$DOMAIN_NAME" >> /etc/hostname
 
 cat <<EOL > /etc/hosts
 $IP_ADDRESS $DOMAIN_NAME
@@ -159,20 +147,16 @@ search home.arpa
 EOL
 }
 
-
 basic_website(){
     DOMAIN_NAME=$1
-    dnf -y install httpd
+    dnf -y install httpd php php-mysqlnd
 
-    # Create directories for the websites
     mkdir -p /mnt/raid5_web/main
     mkdir -p /mnt/raid5_web/secondpage
 
-    # Create a simple index.html for both websites
-    echo "<html><body><h1>Welcome to main.$DOMAIN_NAME</h1></body></html>" > /mnt/raid5_web/main/index.html
-    echo "<html><body><h1>Welcome to secondpage.$DOMAIN_NAME</h1></body></html>" > /mnt/raid5_web/secondpage/index.html
+    echo "<html><body><h1>Welcome to main.$DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/main/index.php
+    echo "<html><body><h1>Welcome to secondpage.$DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/secondpage/index.php
 
-    # Set ownership and permissions
     chown -R apache:apache /mnt/raid5_web/main
     chown -R apache:apache /mnt/raid5_web/secondpage
     chcon -R --type=httpd_sys_content_t /mnt/raid5_web/main
@@ -180,7 +164,6 @@ basic_website(){
 
     chmod -R 755 /mnt/raid5_web
 
-    # Set up virtual hosts
     cat <<EOL > /etc/httpd/conf.d/main.conf
 <VirtualHost *:80>
     ServerName main.$DOMAIN_NAME
@@ -189,6 +172,7 @@ basic_website(){
         AllowOverride All
         Require all granted
     </Directory>
+    DirectoryIndex index.php
     ErrorLog /var/log/httpd/main_error.log
     CustomLog /var/log/httpd/main_access.log combined
 </VirtualHost>
@@ -202,6 +186,7 @@ EOL
         AllowOverride All
         Require all granted
     </Directory>
+    DirectoryIndex index.php
     ErrorLog /var/log/httpd/secondpage_error.log
     CustomLog /var/log/httpd/secondpage_access.log combined
 </VirtualHost>
@@ -214,12 +199,37 @@ EOL
     firewall-cmd --add-service=http --permanent
     firewall-cmd --reload
 
-    # Verify HTTP Access
     echo "Verifying HTTP Access..."
     curl http://main.$DOMAIN_NAME
     curl http://secondpage.$DOMAIN_NAME
 }
 
+basic_db(){
+    DOMAIN_NAME=$1
+    dnf -y install mariadb-server phpmyadmin
+    systemctl start mariadb
+    systemctl enable mariadb
+
+    mysql_secure_installation <<EOF
+
+y
+rootpassword
+rootpassword
+y
+y
+y
+y
+EOF
+
+    firewall-cmd --add-service=mysql --permanent
+    firewall-cmd --reload
+
+    ln -s /usr/share/phpmyadmin /mnt/raid5_web/main/phpmyadmin
+
+    echo "<html><body><h1>PHPMyAdmin installed. <a href='/phpmyadmin'>Access it here</a></h1></body></html>" > /mnt/raid5_web/main/index.php
+
+    systemctl restart httpd
+}
 
 basic_setup(){
     echo "Installing required components"
@@ -229,32 +239,44 @@ basic_setup(){
     echo "Main DNS configuration done ... "
     basic_website $DOMAIN_NAME
     echo "Web server configuration done ... "
-
+    basic_db $DOMAIN_NAME
+    echo "Database configuration done ... "
     echo "Press any key to exit..."
     read -n 1 -s key
     clear
 }
 
 add_user(){
-    /path/to/add_user_script.sh
+    echo "Adding a user ..."
+    read -p "Enter a username: " USERNAME
+    read -sp "Enter a password: " PASSWORD
+    DIR="/mnt/raid5_web/$USERNAME"
+    mkdir -p "$DIR"
+    echo "Created $DIR directory ... " 
+    useradd $USERNAME
+    echo "$USERNAME:$PASSWORD" | chpasswd
+    smbpasswd -a $USERNAME
+    echo "smb user created"
+
+    chown -R $USERNAME:$USERNAME "$DIR"
+    chmod -R 755 "$DIR"
+
+    mysql -u root -prootpassword -e "CREATE DATABASE ${USERNAME}_db;"
+    mysql -u root -prootpassword -e "GRANT ALL PRIVILEGES ON ${USERNAME}_db.* TO '$USERNAME'@'localhost' IDENTIFIED BY '$PASSWORD';"
+
+    echo "<html><body><h1>Welcome, $USERNAME!</h1><p>Your database name is ${USERNAME}_db.</p><?php phpinfo(); ?></body></html>" > "$DIR/index.php"
 }
 
 remove_user(){
-    echo "Removing an user ... "
+    echo "Removing a user ... "
     echo "Users list : "
     pdbedit -L
     read -p "Enter a user to delete: " USERNAME
-    # Remove from Unix
     userdel $USERNAME
-    # Remove Samba user
     smbpasswd -x $USERNAME
-    # Remove user's directory
     rm -rf /mnt/raid5_web/$USERNAME
-    # Remove user-related VirtualHost configuration
-    rm /etc/httpd/conf.d/$USERNAME.conf
-    # Restart Apache to apply changes
-    systemctl restart httpd
-    echo "User $USERNAME removed."
+    mysql -u root -prootpassword -e "DROP DATABASE ${USERNAME}_db;"
+    echo "User $USERNAME and their data have been removed."
 }
 
 main() {

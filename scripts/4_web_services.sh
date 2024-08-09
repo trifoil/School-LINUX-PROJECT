@@ -229,6 +229,14 @@ EOL
 }
 
 
+basic_db(){
+    
+}
+
+basic_mail(){
+
+}
+
 basic_setup(){
     echo "Installing required components"
     read -p "Enter the IP address : " IP_ADDRESS
