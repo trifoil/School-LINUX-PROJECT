@@ -11,6 +11,8 @@ display_menu() {
     echo "|               Please select the tool you want to use                 |"
     echo "|----------------------------------------------------------------------|"
     echo "| 0. Basic setup (main DNS, web, DB)                                   |"
+    echo "| 1. Add User                                                          |"
+    echo "| 2. Remove User                                                       |"
     echo "|----------------------------------------------------------------------|"
     echo "| q. Quit                                                              |"
     echo "|----------------------------------------------------------------------|"
