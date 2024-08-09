@@ -27,25 +27,19 @@ ip_set(){
     echo "Done..."
     echo "Press any key to continue..."
     read -n 1 -s key
-	clear
+    clear
 }
 
 backup_file(){
-    # Define the named.conf file path
     ORIGINAL_FILE=$1
-    # Check if the named.conf file exists
     if [ ! -f "$ORIGINAL_FILE" ]; then
         echo "Error: $ORIGINAL_FILE does not exist."
         exit 1
     fi
-    # Create a timestamp
     TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-    # Define the backup file name
     BACKUP_FILE="/etc/named.conf.bak.$TIMESTAMP"
-    # Rename the named.conf to the backup file
     mv "$ORIGINAL_FILE" "$BACKUP_FILE"
     touch "$ORIGINAL_FILE"
-    # Check if the rename was successful
     if [ $? -eq 0 ]; then
         echo "Successfully backed up $ORIGINAL_FILE to $BACKUP_FILE"
     else
@@ -53,7 +47,6 @@ backup_file(){
         exit 1
     fi
 }
-
 
 basic_dns(){
     firewall-cmd --add-service=dns --permanent
@@ -104,7 +97,6 @@ zone "$REVERSE_ZONE" IN {
 };
 EOL
 
-# Create the zone files
 cat <<EOL > /var/named/forward.$DOMAIN_NAME
 \$TTL 86400
 @   IN  SOA     ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
@@ -132,10 +124,7 @@ cat <<EOL > /var/named/reverse.$DOMAIN_NAME
 $REVERSE_IP       IN  PTR     $DOMAIN_NAME.
 EOL
 
-# Configure /etc/sysconfig/named to use only IPv4
 echo 'OPTIONS="-4"' >> /etc/sysconfig/named
-#echo "$IP_ADDRESS $DOMAIN_NAME" >> /etc/hosts
-#echo "$DOMAIN_NAME" >> /etc/hostname
 
 cat <<EOL > /etc/hosts
 $IP_ADDRESS $DOMAIN_NAME
@@ -148,18 +137,9 @@ EOL
 
     systemctl start named
     systemctl enable named
-    # chown named:named /var/named/$SERVERNAME.forward
-    # chmod 640 /var/named/$SERVERNAME.forward
-    # chown named:named /var/named/$SERVERNAME.reverse
-    # chmod 640 /var/named/$SERVERNAME.reversed
-
-    # Rechargement du cache DNS chaque heure
-    #bash -c "(crontab -l 2>/dev/null; echo '0 * * * *  rndc dumpdb -cache') | crontab -"
-    #bash -c "(crontab -l 2>/dev/null; echo '* 17 * * *  rndc flush') | crontab -"
-
 
     systemctl restart named 
-#    echo "nameserver $IP_ADDRESS" >> /etc/resolv.conf
+
 cat <<EOL > /etc/resolv.conf
 nameserver  $DOMAIN_NAME
 options edns0 trust-ad
@@ -167,51 +147,91 @@ search home.arpa
 EOL
 }
 
+# basic_website(){
+#     DOMAIN_NAME=$1
+#     dnf -y install httpd php php-mysqlnd
 
-basic_website(){
+#     mkdir -p /mnt/raid5_web/main
+#     mkdir -p /mnt/raid5_web/secondpage
+
+#     echo "<html><body><h1>Welcome to main.$DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/main/index.php
+#     echo "<html><body><h1>Welcome to secondpage.$DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/secondpage/index.php
+
+#     chown -R apache:apache /mnt/raid5_web/main
+#     chown -R apache:apache /mnt/raid5_web/secondpage
+#     chcon -R --type=httpd_sys_content_t /mnt/raid5_web/main
+#     chcon -R --type=httpd_sys_content_t /mnt/raid5_web/secondpage
+
+#     chmod -R 755 /mnt/raid5_web
+
+#     cat <<EOL > /etc/httpd/conf.d/main.conf
+# <VirtualHost *:80>
+#     ServerName main.$DOMAIN_NAME
+#     DocumentRoot /mnt/raid5_web/main
+#     <Directory /mnt/raid5_web/main>
+#         AllowOverride All
+#         Require all granted
+#     </Directory>
+#     DirectoryIndex index.php
+#     ErrorLog /var/log/httpd/main_error.log
+#     CustomLog /var/log/httpd/main_access.log combined
+# </VirtualHost>
+# EOL
+
+#     cat <<EOL > /etc/httpd/conf.d/secondpage.conf
+# <VirtualHost *:80>
+#     ServerName secondpage.$DOMAIN_NAME
+#     DocumentRoot /mnt/raid5_web/secondpage
+#     <Directory /mnt/raid5_web/secondpage>
+#         AllowOverride All
+#         Require all granted
+#     </Directory>
+#     DirectoryIndex index.php
+#     ErrorLog /var/log/httpd/secondpage_error.log
+#     CustomLog /var/log/httpd/secondpage_access.log combined
+# </VirtualHost>
+# EOL
+
+#     systemctl start httpd
+#     systemctl enable httpd
+#     systemctl restart httpd
+
+#     firewall-cmd --add-service=http --permanent
+#     firewall-cmd --reload
+
+#     echo "Verifying HTTP Access..."
+#     curl http://main.$DOMAIN_NAME
+#     curl http://secondpage.$DOMAIN_NAME
+# }
+
+basic_root_website(){
     DOMAIN_NAME=$1
     dnf -y install httpd
 
-    # Create directories for the websites
-    mkdir -p /mnt/raid5_web/main
-    mkdir -p /mnt/raid5_web/secondpage
+    # Create the directory for the root website
+    mkdir -p /mnt/raid5_web/root
 
-    # Create a simple index.html for both websites
-    echo "<html><body><h1>Welcome to main.$DOMAIN_NAME</h1></body></html>" > /mnt/raid5_web/main/index.html
-    echo "<html><body><h1>Welcome to secondpage.$DOMAIN_NAME</h1></body></html>" > /mnt/raid5_web/secondpage/index.html
+    # Create a simple index.php file for the root website
+    echo "<html><body><h1>Welcome to $DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/root/index.php
 
     # Set ownership and permissions
-    chown -R apache:apache /mnt/raid5_web/main
-    chown -R apache:apache /mnt/raid5_web/secondpage
-    chcon -R --type=httpd_sys_content_t /mnt/raid5_web/main
-    chcon -R --type=httpd_sys_content_t /mnt/raid5_web/secondpage
+    chown -R apache:apache /mnt/raid5_web/root
+    chcon -R --type=httpd_sys_content_t /mnt/raid5_web/root
 
-    chmod -R 755 /mnt/raid5_web
+    chmod -R 755 /mnt/raid5_web/root
 
-    # Set up virtual hosts
-    cat <<EOL > /etc/httpd/conf.d/main.conf
+    # Set up the virtual host for the root domain
+    cat <<EOL > /etc/httpd/conf.d/root.conf
 <VirtualHost *:80>
-    ServerName main.$DOMAIN_NAME
-    DocumentRoot /mnt/raid5_web/main
-    <Directory /mnt/raid5_web/main>
+    ServerName $DOMAIN_NAME
+    DocumentRoot /mnt/raid5_web/root
+    <Directory /mnt/raid5_web/root>
         AllowOverride All
         Require all granted
     </Directory>
-    ErrorLog /var/log/httpd/main_error.log
-    CustomLog /var/log/httpd/main_access.log combined
-</VirtualHost>
-EOL
-
-    cat <<EOL > /etc/httpd/conf.d/secondpage.conf
-<VirtualHost *:80>
-    ServerName secondpage.$DOMAIN_NAME
-    DocumentRoot /mnt/raid5_web/secondpage
-    <Directory /mnt/raid5_web/secondpage>
-        AllowOverride All
-        Require all granted
-    </Directory>
-    ErrorLog /var/log/httpd/secondpage_error.log
-    CustomLog /var/log/httpd/secondpage_access.log combined
+    DirectoryIndex index.php
+    ErrorLog /var/log/httpd/root_error.log
+    CustomLog /var/log/httpd/root_access.log combined
 </VirtualHost>
 EOL
 
@@ -224,29 +244,60 @@ EOL
 
     # Verify HTTP Access
     echo "Verifying HTTP Access..."
-    curl http://main.$DOMAIN_NAME
-    curl http://secondpage.$DOMAIN_NAME
+    curl http://$DOMAIN_NAME
 }
 
 
 basic_db(){
-    echo "beep"
+    DOMAIN_NAME=$1
+    dnf -y install mariadb-server phpmyadmin
+    systemctl start mariadb
+    systemctl enable mariadb
+
+    mysql_secure_installation <<EOF
+
+y
+rootpassword
+rootpassword
+y
+y
+y
+y
+EOF
+
+    firewall-cmd --add-service=mysql --permanent
+    firewall-cmd --reload
+
+    ln -s /usr/share/phpmyadmin /mnt/raid5_web/main/phpmyadmin
+
+    echo "<html><body><h1>PHPMyAdmin installed. <a href='/phpmyadmin'>Access it here</a></h1></body></html>" > /mnt/raid5_web/main/index.php
+
+    systemctl restart httpd
 }
 
-basic_mail(){
-    echo "beep"
-}
+# basic_setup(){
+#     echo "Installing required components"
+#     read -p "Enter the IP address : " IP_ADDRESS
+#     read -p "Enter the server domain name : " DOMAIN_NAME
+#     basic_dns $IP_ADDRESS $DOMAIN_NAME
+#     echo "Main DNS configuration done ... "
+#     basic_website $DOMAIN_NAME
+#     echo "Web server configuration done ... "
+#     basic_db $DOMAIN_NAME
+#     echo "Database configuration done ... "
+#     echo "Press any key to exit..."
+#     read -n 1 -s key
+#     clear
+# }
 
 basic_setup(){
     echo "Installing required components"
     read -p "Enter the IP address : " IP_ADDRESS
-    read -p "Enter the server domain name : " DOMAIN_NAME
+    read -p "Enter the server domain name (e.g., test.toto) : " DOMAIN_NAME
     basic_dns $IP_ADDRESS $DOMAIN_NAME
     echo "Main DNS configuration done ... "
-    #echo "Installing basic website ... "
-    #basic_website 
 
-    basic_website $DOMAIN_NAME
+    basic_root_website $DOMAIN_NAME
     echo "Web server configuration done ... "
 
     echo "Press any key to exit..."
@@ -255,26 +306,36 @@ basic_setup(){
 }
 
 add_user(){
-    echo "Adding an user ..."
+    echo "Adding a user ..."
     read -p "Enter a username: " USERNAME
     read -sp "Enter a password: " PASSWORD
     DIR="/mnt/raid5_web/$USERNAME"
     mkdir -p "$DIR"
     echo "Created $DIR directory ... " 
     useradd $USERNAME
-    echo "unix user created"
+    echo "$USERNAME:$PASSWORD" | chpasswd
     smbpasswd -a $USERNAME
     echo "smb user created"
+
+    chown -R $USERNAME:$USERNAME "$DIR"
+    chmod -R 755 "$DIR"
+
+    mysql -u root -prootpassword -e "CREATE DATABASE ${USERNAME}_db;"
+    mysql -u root -prootpassword -e "GRANT ALL PRIVILEGES ON ${USERNAME}_db.* TO '$USERNAME'@'localhost' IDENTIFIED BY '$PASSWORD';"
+
+    echo "<html><body><h1>Welcome, $USERNAME!</h1><p>Your database name is ${USERNAME}_db.</p><?php phpinfo(); ?></body></html>" > "$DIR/index.php"
 }
 
-
-
 remove_user(){
-    echo "Removing an user ... "
+    echo "Removing a user ... "
     echo "Users list : "
     pdbedit -L
     read -p "Enter a user to delete: " USERNAME
-    
+    userdel $USERNAME
+    smbpasswd -x $USERNAME
+    rm -rf /mnt/raid5_web/$USERNAME
+    mysql -u root -prootpassword -e "DROP DATABASE ${USERNAME}_db;"
+    echo "User $USERNAME and their data have been removed."
 }
 
 main() {
