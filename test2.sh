@@ -258,7 +258,7 @@ add_user(){
     echo "<html><body><h1>Welcome, $USERNAME!</h1><p>Your database name is ${USERNAME}_db.</p><?php phpinfo(); ?></body></html>" > "$DIR/index.php"
 
     # Set up the virtual host for the user
-    cat <<EOL > /etc/httpd/conf.d/001-$USERNAME.conf
+    cat <<EOL > /etc/httpd/conf.d/$USERNAME.conf
 <VirtualHost *:80>
     ServerName $USERNAME.$DOMAIN_NAME
     DocumentRoot /mnt/raid5_web/$USERNAME
@@ -267,8 +267,8 @@ add_user(){
         Require all granted
     </Directory>
     DirectoryIndex index.php
-    ErrorLog /var/log/httpd/${USERNAME}_error.log
-    CustomLog /var/log/httpd/${USERNAME}_access.log combined
+    ErrorLog /var/log/httpd/$USERNAME_error.log
+    CustomLog /var/log/httpd/$USERNAME_access.log combined
 </VirtualHost>
 EOL
 
@@ -284,7 +284,7 @@ remove_user(){
     smbpasswd -x $USERNAME
     rm -rf /mnt/raid5_web/$USERNAME
     mysql -u root -prootpassword -e "DROP DATABASE ${USERNAME}_db;"
-    rm -f /etc/httpd/conf.d/001-$USERNAME.conf
+    rm -f /etc/httpd/conf.d/$USERNAME.conf
     systemctl restart httpd
     echo "User $USERNAME and their data have been removed."
 }

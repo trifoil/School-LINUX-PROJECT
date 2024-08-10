@@ -36,3 +36,8 @@ test.toto
 ajouter le DNS dans nmtui sur la machine client
 
 !!! redémarrer NetworkManager sur la machine client dans le cas où le serveur aurait été déconnecté !!!
+
+
+
+ERROR 2002 (HY000): Can't connect to local server through socket '/var/lib/mysql/mysql.sock' (2)
+ERROR 2002 (HY000): Can't connect to local server through socket '/var/lib/mysql/mysql.sock' (2)
