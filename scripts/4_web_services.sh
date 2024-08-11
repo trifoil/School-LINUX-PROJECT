@@ -111,6 +111,7 @@ cat <<EOL > /var/named/forward.$DOMAIN_NAME
 @       IN  NS      ns.$DOMAIN_NAME.
 ns      IN  A       $IP_ADDRESS
 @       IN  A       $IP_ADDRESS
+*       IN  A       $IP_ADDRESS
 EOL
 
 cat <<EOL > /var/named/reverse.$DOMAIN_NAME
@@ -149,63 +150,6 @@ search home.arpa
 EOL
 }
 
-# basic_website(){
-#     DOMAIN_NAME=$1
-#     dnf -y install httpd php php-mysqlnd
-
-#     mkdir -p /mnt/raid5_web/main
-#     mkdir -p /mnt/raid5_web/secondpage
-
-#     echo "<html><body><h1>Welcome to main.$DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/main/index.php
-#     echo "<html><body><h1>Welcome to secondpage.$DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/secondpage/index.php
-
-#     chown -R apache:apache /mnt/raid5_web/main
-#     chown -R apache:apache /mnt/raid5_web/secondpage
-#     chcon -R --type=httpd_sys_content_t /mnt/raid5_web/main
-#     chcon -R --type=httpd_sys_content_t /mnt/raid5_web/secondpage
-
-#     chmod -R 755 /mnt/raid5_web
-
-#     cat <<EOL > /etc/httpd/conf.d/main.conf
-# <VirtualHost *:80>
-#     ServerName main.$DOMAIN_NAME
-#     DocumentRoot /mnt/raid5_web/main
-#     <Directory /mnt/raid5_web/main>
-#         AllowOverride All
-#         Require all granted
-#     </Directory>
-#     DirectoryIndex index.php
-#     ErrorLog /var/log/httpd/main_error.log
-#     CustomLog /var/log/httpd/main_access.log combined
-# </VirtualHost>
-# EOL
-
-#     cat <<EOL > /etc/httpd/conf.d/secondpage.conf
-# <VirtualHost *:80>
-#     ServerName secondpage.$DOMAIN_NAME
-#     DocumentRoot /mnt/raid5_web/secondpage
-#     <Directory /mnt/raid5_web/secondpage>
-#         AllowOverride All
-#         Require all granted
-#     </Directory>
-#     DirectoryIndex index.php
-#     ErrorLog /var/log/httpd/secondpage_error.log
-#     CustomLog /var/log/httpd/secondpage_access.log combined
-# </VirtualHost>
-# EOL
-
-#     systemctl start httpd
-#     systemctl enable httpd
-#     systemctl restart httpd
-
-#     firewall-cmd --add-service=http --permanent
-#     firewall-cmd --reload
-
-#     echo "Verifying HTTP Access..."
-#     curl http://main.$DOMAIN_NAME
-#     curl http://secondpage.$DOMAIN_NAME
-# }
-
 basic_root_website(){
     DOMAIN_NAME=$1
     dnf -y install httpd
@@ -226,6 +170,7 @@ basic_root_website(){
     cat <<EOL > /etc/httpd/conf.d/root.conf
 <VirtualHost *:80>
     ServerName $DOMAIN_NAME
+    ServerAlias *.$DOMAIN_NAME
     DocumentRoot /mnt/raid5_web/root
     <Directory /mnt/raid5_web/root>
         AllowOverride All
@@ -270,27 +215,12 @@ EOF
     firewall-cmd --add-service=mysql --permanent
     firewall-cmd --reload
 
-    ln -s /usr/share/phpmyadmin /mnt/raid5_web/main/phpmyadmin
+    ln -s /usr/share/phpmyadmin /mnt/raid5_web/root/phpmyadmin
 
-    echo "<html><body><h1>PHPMyAdmin installed. <a href='/phpmyadmin'>Access it here</a></h1></body></html>" > /mnt/raid5_web/main/index.php
+    echo "<html><body><h1>PHPMyAdmin installed. <a href='/phpmyadmin'>Access it here</a></h1></body></html>" > /mnt/raid5_web/root/index.php
 
     systemctl restart httpd
 }
-
-# basic_setup(){
-#     echo "Installing required components"
-#     read -p "Enter the IP address : " IP_ADDRESS
-#     read -p "Enter the server domain name : " DOMAIN_NAME
-#     basic_dns $IP_ADDRESS $DOMAIN_NAME
-#     echo "Main DNS configuration done ... "
-#     basic_website $DOMAIN_NAME
-#     echo "Web server configuration done ... "
-#     basic_db $DOMAIN_NAME
-#     echo "Database configuration done ... "
-#     echo "Press any key to exit..."
-#     read -n 1 -s key
-#     clear
-# }
 
 basic_setup(){
     echo "Installing required components"
@@ -326,6 +256,24 @@ add_user(){
     mysql -u root -prootpassword -e "GRANT ALL PRIVILEGES ON ${USERNAME}_db.* TO '$USERNAME'@'localhost' IDENTIFIED BY '$PASSWORD';"
 
     echo "<html><body><h1>Welcome, $USERNAME!</h1><p>Your database name is ${USERNAME}_db.</p><?php phpinfo(); ?></body></html>" > "$DIR/index.php"
+
+    # Set up the virtual host for the user
+    cat <<EOL > /etc/httpd/conf.d/$USERNAME.conf
+<VirtualHost *:80>
+    ServerName $USERNAME.$DOMAIN_NAME
+    DocumentRoot /mnt/raid5_web/$USERNAME
+    <Directory /mnt/raid5_web/$USERNAME>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    DirectoryIndex index.php
+    ErrorLog /var/log/httpd/${USERNAME}_error.log
+    CustomLog /var/log/httpd/${USERNAME}_access.log combined
+</VirtualHost>
+EOL
+    semanage fcontext -a -e /var/www /mnt/raid5_web
+    restorecon -Rv /mnt
+    systemctl restart httpd
 }
 
 remove_user(){
@@ -337,6 +285,8 @@ remove_user(){
     smbpasswd -x $USERNAME
     rm -rf /mnt/raid5_web/$USERNAME
     mysql -u root -prootpassword -e "DROP DATABASE ${USERNAME}_db;"
+    rm -f /etc/httpd/conf.d/$USERNAME.conf
+    systemctl restart httpd
     echo "User $USERNAME and their data have been removed."
 }
 
