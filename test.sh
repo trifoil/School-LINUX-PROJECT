@@ -267,11 +267,12 @@ add_user(){
         Require all granted
     </Directory>
     DirectoryIndex index.php
-    ErrorLog /var/log/httpd/$USERNAME_error.log
-    CustomLog /var/log/httpd/$USERNAME_access.log combined
+    ErrorLog /var/log/httpd/${USERNAME}_error.log
+    CustomLog /var/log/httpd/${USERNAME}_access.log combined
 </VirtualHost>
 EOL
-
+    semanage fcontext -a -e /var/www /mnt/raid5_web
+    restorecon -Rv /mnt
     systemctl restart httpd
 }
 
