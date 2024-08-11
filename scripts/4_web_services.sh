@@ -232,6 +232,19 @@ basic_setup(){
     basic_root_website $DOMAIN_NAME
     echo "Web server configuration done ... "
 
+
+    # Define the configuration file path
+    TEMP="/etc/httpd/conf.d/phpMyAdmin.conf"
+    # Use sed to find and replace the line starting with 'Require'
+    sed -i '/^Require/c\Require ip 127.0.0.1 192.168.1.0/24' "$TEMP"
+    # Restart Apache to apply changes
+    systemctl restart httpd
+
+    echo "Configuration updated and Apache restarted."
+
+    semanage fcontext -a -e /var/www /mnt/raid5_web
+    restorecon -Rv /mnt
+    
     echo "Press any key to exit..."
     read -n 1 -s key
     clear
