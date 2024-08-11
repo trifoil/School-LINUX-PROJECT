@@ -239,9 +239,9 @@ basic_setup(){
 
 add_user(){
     echo "Adding a user ..."
+    read -p "Enter the server domain name (e.g., test.toto) : " DOMAIN_NAME
     read -p "Enter a username: " USERNAME
     read -sp "Enter a password: " PASSWORD
-    read -p "Enter the server domain name (e.g., test.toto) : " DOMAIN_NAME
     DIR="/mnt/raid5_web/$USERNAME"
     mkdir -p "$DIR"
     echo "Created $DIR directory ... " 
