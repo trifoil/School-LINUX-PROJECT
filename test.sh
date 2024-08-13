@@ -229,8 +229,6 @@ EOF
 
     echo "Configuration updated and Apache restarted."
 
-    
-
     echo "<html><body><h1>PHPMyAdmin installed. <a href='/phpmyadmin'>Access it here</a></h1></body></html>" > /mnt/raid5_web/root/index.php
 
     systemctl restart httpd
