@@ -218,6 +218,19 @@ EOF
 
     ln -s /usr/share/phpmyadmin /mnt/raid5_web/root/phpmyadmin
 
+    # Define the configuration file path
+    conf_file="/etc/httpd/conf.d/phpMyAdmin.conf"
+
+    # Use sed to find and replace the line starting with 'Require'
+    sed -i '/^Require/c\Require ip 127.0.0.1 192.168.1.0/24' "$conf_file"
+
+    # Restart Apache to apply changes
+    systemctl restart httpd
+
+    echo "Configuration updated and Apache restarted."
+
+    
+
     echo "<html><body><h1>PHPMyAdmin installed. <a href='/phpmyadmin'>Access it here</a></h1></body></html>" > /mnt/raid5_web/root/index.php
 
     systemctl restart httpd
