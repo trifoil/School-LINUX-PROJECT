@@ -41,3 +41,6 @@ ajouter le DNS dans nmtui sur la machine client
 
 ERROR 2002 (HY000): Can't connect to local server through socket '/var/lib/mysql/mysql.sock' (2)
 ERROR 2002 (HY000): Can't connect to local server through socket '/var/lib/mysql/mysql.sock' (2)
+
+ERROR 1146 (42S02) at line 1: Table 'roundcubemail.users' doesn't exist
+
