@@ -10,7 +10,7 @@ display_menu() {
     echo -e "|                ${BLUE}Welcome To The User Management Menu ${NC}                  |"
     echo "|               Please select the tool you want to use                 |"
     echo "|----------------------------------------------------------------------|"
-    echo "| 0. Basic setup (main DNS, web, DB)                                   |"
+    echo "| 0. Basic setup (main DNS, web, DB, mail)                             |"
     echo "| 1. Add User                                                          |"
     echo "| 2. Remove User                                                       |"
     echo "|----------------------------------------------------------------------|"
@@ -112,6 +112,7 @@ cat <<EOL > /var/named/forward.$DOMAIN_NAME
 ns      IN  A       $IP_ADDRESS
 @       IN  A       $IP_ADDRESS
 *       IN  A       $IP_ADDRESS
+mail    IN  A       $IP_ADDRESS
 EOL
 
 cat <<EOL > /var/named/reverse.$DOMAIN_NAME
@@ -217,9 +218,71 @@ EOF
 
     ln -s /usr/share/phpmyadmin /mnt/raid5_web/root/phpmyadmin
 
+    # Define the configuration file path
+    conf_file="/etc/httpd/conf.d/phpMyAdmin.conf"
+
+    # Use sed to find and replace the line starting with 'Require'
+    sed -i '/^Require/c\Require ip 127.0.0.1 192.168.1.0/24' "$conf_file"
+
+    # Restart Apache to apply changes
+    systemctl restart httpd
+
+    echo "Configuration updated and Apache restarted."
+
+    ausearch -c 'mariadbd' --raw | audit2allow -M my-mariadbd
+    semodule -X 300 -i my-mariadbd.pp
+
     echo "<html><body><h1>PHPMyAdmin installed. <a href='/phpmyadmin'>Access it here</a></h1></body></html>" > /mnt/raid5_web/root/index.php
 
     systemctl restart httpd
+}
+
+basic_mail(){
+    DOMAIN_NAME=$1
+    dnf -y install postfix dovecot roundcubemail
+
+    # Configure Postfix
+    sed -i 's/#myhostname = host.domain.tld/myhostname = mail.'"$DOMAIN_NAME"'/' /etc/postfix/main.cf
+    sed -i 's/#mydomain = domain.tld/mydomain = '"$DOMAIN_NAME"'/' /etc/postfix/main.cf
+    sed -i 's/#myorigin = $mydomain/myorigin = $mydomain/' /etc/postfix/main.cf
+    sed -i 's/inet_interfaces = localhost/inet_interfaces = all/' /etc/postfix/main.cf
+    sed -i 's/#home_mailbox = Maildir\//home_mailbox = Maildir\//' /etc/postfix/main.cf
+
+    systemctl start postfix
+    systemctl enable postfix
+
+    # Configure Dovecot
+    sed -i 's/#protocols = imap pop3 lmtp/protocols = imap pop3 lmtp/' /etc/dovecot/dovecot.conf
+    sed -i 's/#mail_location =/mail_location = maildir:~\/Maildir/' /etc/dovecot/conf.d/10-mail.conf
+
+    systemctl start dovecot
+    systemctl enable dovecot
+
+    # Configure Roundcube
+    cat <<EOL > /etc/httpd/conf.d/roundcube.conf
+Alias /roundcube /usr/share/roundcubemail
+<Directory /usr/share/roundcubemail>
+    Options -Indexes
+    AllowOverride None
+    Require all granted
+</Directory>
+EOL
+
+    mysql -u root -prootpassword -e "CREATE DATABASE roundcubemail;"
+    mysql -u root -prootpassword -e "GRANT ALL PRIVILEGES ON roundcubemail.* TO 'roundcube'@'localhost' IDENTIFIED BY 'roundcube_pass';"
+    mysql -u root -prootpassword roundcubemail < /usr/share/doc/roundcubemail*/SQL/mysql.initial.sql
+
+    # Configure Roundcube database connection
+    sed -i "s|^\(\$config\['db_dsnw'\] = \).*|\1'mysql://roundcube:roundcube_pass@localhost/roundcubemail';|" /etc/roundcubemail/config.inc.php
+
+    systemctl restart httpd
+
+    firewall-cmd --add-service=smtp --permanent
+    firewall-cmd --add-service=imap --permanent
+    firewall-cmd --add-service=pop3 --permanent
+    firewall-cmd --reload
+
+    echo "Roundcube webmail setup is complete."
 }
 
 basic_setup(){
@@ -232,19 +295,12 @@ basic_setup(){
     basic_root_website $DOMAIN_NAME
     echo "Web server configuration done ... "
 
+    basic_db $DOMAIN_NAME
+    echo "Database server configuration done ... "
 
-    # Define the configuration file path
-    TEMP="/etc/httpd/conf.d/phpMyAdmin.conf"
-    # Use sed to find and replace the line starting with 'Require'
-    sed -i '/^Require/c\Require ip 127.0.0.1 192.168.1.0/24' "$TEMP"
-    # Restart Apache to apply changes
-    systemctl restart httpd
+    basic_mail $DOMAIN_NAME
+    echo "Mail server configuration done ... "
 
-    echo "Configuration updated and Apache restarted."
-
-    semanage fcontext -a -e /var/www /mnt/raid5_web
-    restorecon -Rv /mnt
-    
     echo "Press any key to exit..."
     read -n 1 -s key
     clear
@@ -255,6 +311,7 @@ add_user(){
     read -p "Enter the server domain name (e.g., test.toto) : " DOMAIN_NAME
     read -p "Enter a username: " USERNAME
     read -sp "Enter a password: " PASSWORD
+    echo
     DIR="/mnt/raid5_web/$USERNAME"
     mkdir -p "$DIR"
     echo "Created $DIR directory ... " 
@@ -266,13 +323,15 @@ add_user(){
     chown -R $USERNAME:$USERNAME "$DIR"
     chmod -R 755 "$DIR"
 
+    # Create the user's database
     mysql -u root -prootpassword -e "CREATE DATABASE ${USERNAME}_db;"
     mysql -u root -prootpassword -e "GRANT ALL PRIVILEGES ON ${USERNAME}_db.* TO '$USERNAME'@'localhost' IDENTIFIED BY '$PASSWORD';"
 
+    # Create a simple index.php file in the user's directory
     echo "<html><body><h1>Welcome, $USERNAME!</h1><p>Your database name is ${USERNAME}_db.</p><?php phpinfo(); ?></body></html>" > "$DIR/index.php"
 
-    # Set up the virtual host for the user
-    cat <<EOL > /etc/httpd/conf.d/$USERNAME.conf
+    # Set up the virtual host for the user's website
+    cat <<EOL > /etc/httpd/conf.d/001-$USERNAME.conf
 <VirtualHost *:80>
     ServerName $USERNAME.$DOMAIN_NAME
     DocumentRoot /mnt/raid5_web/$USERNAME
@@ -285,10 +344,37 @@ add_user(){
     CustomLog /var/log/httpd/${USERNAME}_access.log combined
 </VirtualHost>
 EOL
+
+    # Set up the virtual host for the user's mail subdomain
+    cat <<EOL > /etc/httpd/conf.d/mail-$USERNAME.conf
+<VirtualHost *:80>
+    ServerName mail.$USERNAME.$DOMAIN_NAME
+    DocumentRoot /usr/share/roundcubemail
+    <Directory /usr/share/roundcubemail>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    DirectoryIndex index.php
+    ErrorLog /var/log/httpd/mail_${USERNAME}_error.log
+    CustomLog /var/log/httpd/mail_${USERNAME}_access.log combined
+</VirtualHost>
+EOL
+
+    # Set up Maildir for the user
+    maildirmake.dovecot /home/$USERNAME/Maildir
+    chown -R $USERNAME:$USERNAME /home/$USERNAME/Maildir
+
+    # Add the user to the Roundcube database
+    mysql -u root -prootpassword -e "INSERT INTO roundcubemail.users (username, mail_host, created) VALUES ('$USERNAME', 'localhost', NOW());"
+
     semanage fcontext -a -e /var/www /mnt/raid5_web
     restorecon -Rv /mnt
     systemctl restart httpd
+
+    echo "User $USERNAME has been created with a mail account and a database."
+    echo "Mail can be accessed at http://mail.$USERNAME.$DOMAIN_NAME"
 }
+
 
 remove_user(){
     echo "Removing a user ... "
@@ -299,7 +385,12 @@ remove_user(){
     smbpasswd -x $USERNAME
     rm -rf /mnt/raid5_web/$USERNAME
     mysql -u root -prootpassword -e "DROP DATABASE ${USERNAME}_db;"
-    rm -f /etc/httpd/conf.d/$USERNAME.conf
+    rm -f /etc/httpd/conf.d/001-$USERNAME.conf
+    rm -rf /home/$USERNAME/Maildir
+
+    # Remove the user from the Roundcube database
+    mysql -u root -prootpassword -e "DELETE FROM roundcubemail.users WHERE username = '$USERNAME';"
+
     systemctl restart httpd
     echo "User $USERNAME and their data have been removed."
 }
