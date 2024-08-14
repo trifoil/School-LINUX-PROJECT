@@ -232,7 +232,8 @@ EOF
     ausearch -c 'mariadbd' --raw | audit2allow -M my-mariadbd
     semodule -X 300 -i my-mariadbd.pp
 
-    echo "<html><body><h1>PHPMyAdmin installed. <a href='/phpmyadmin'>Access it here</a></h1></body></html>" > /mnt/raid5_web/root/index.php
+    #echo "<html><body><h1>PHPMyAdmin installed. <a href='/phpmyadmin'>Access it here</a></h1></body></html>" > /mnt/raid5_web/root/index.php
+    echo "<html><body><h1>PHPMyAdmin installed.</h1></body></html>" > /mnt/raid5_web/root/index.php
 
     systemctl restart httpd
 }
