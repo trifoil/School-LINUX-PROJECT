@@ -10,7 +10,7 @@ display_menu() {
     echo -e "|                ${BLUE}Welcome To The User Management Menu ${NC}                  |"
     echo "|               Please select the tool you want to use                 |"
     echo "|----------------------------------------------------------------------|"
-    echo "| 0. Basic setup (main DNS, web, DB, mail, SSL)                        |"
+    echo "| 0. Basic setup (main DNS, web, DB, mail)                             |"
     echo "| 1. Add User                                                          |"
     echo "| 2. Remove User                                                       |"
     echo "|----------------------------------------------------------------------|"
@@ -19,23 +19,140 @@ display_menu() {
     echo ""
 }
 
-install_ssl_certificates(){
-    DOMAIN_NAME=$1
-    EMAIL=$2
+ip_set(){
+    INTERFACE=$1
+    ADDRESS=$2
+    nmcli connection modify "$INTERFACE" ipv4.method manual
+    nmcli connection modify "$INTERFACE" ipv4.addresses "$ADDRESS/24"
+    nmcli connection up "$INTERFACE"
+    arping -c 3 -I $INTERFACE $ADDRESS
+    echo "Done..."
+    echo "Press any key to continue..."
+    read -n 1 -s key
+    clear
+}
 
-    # Install Certbot
-    dnf -y install certbot python3-certbot-apache
+backup_file(){
+    ORIGINAL_FILE=$1
+    if [ ! -f "$ORIGINAL_FILE" ]; then
+        echo "Error: $ORIGINAL_FILE does not exist."
+        exit 1
+    fi
+    TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+    BACKUP_FILE="/etc/named.conf.bak.$TIMESTAMP"
+    mv "$ORIGINAL_FILE" "$BACKUP_FILE"
+    touch "$ORIGINAL_FILE"
+    if [ $? -eq 0 ]; then
+        echo "Successfully backed up $ORIGINAL_FILE to $BACKUP_FILE"
+    else
+        echo "Error: Failed to back up $ORIGINAL_FILE"
+        exit 1
+    fi
+}
 
-    # Obtain the certificate
-    certbot --apache -d $DOMAIN_NAME -d www.$DOMAIN_NAME --non-interactive --agree-tos -m $EMAIL
+basic_dns(){
+    firewall-cmd --add-service=dns --permanent
+    firewall-cmd --reload
+    IP_ADDRESS=$1
+    DOMAIN_NAME=$2
+    NETWORK=$(echo $IP_ADDRESS | cut -d"." -f1-3).0/24
+    REVERSE_ZONE=$(echo $IP_ADDRESS | awk -F. '{print $3"."$2"."$1".in-addr.arpa"}')
+    REVERSE_IP=$(echo $IP_ADDRESS | awk -F. '{print $4}')
+    backup_file "/etc/named.conf"
+    dnf -y install bind bind-utils
 
-    # Automatically renew the certificate
-    echo "0 3 * * * root certbot renew --quiet" >> /etc/crontab
+cat <<EOL > /etc/named.conf
+options {
+    listen-on port 53 { any; };
+    directory "/var/named";
+    dump-file "/var/named/data/cache_dump.db";
+    statistics-file "/var/named/data/named_stats.txt";
+    memstatistics-file "/var/named/data/named_mem_stats.txt";
+    secroots-file   "/var/named/data/named.secroots";
+    recursing-file  "/var/named/data/named.recursing";
+    allow-query { any; };
+    recursion yes;
+};
+
+logging {
+        channel default_debug {
+                file "data/named.run";
+                severity dynamic;
+        };
+};
+
+zone "." IN {
+        type hint;
+        file "named.ca";
+};
+
+zone "$DOMAIN_NAME" IN {
+    type master;
+    file "forward.$DOMAIN_NAME";
+    allow-update { none; };
+};
+
+zone "$REVERSE_ZONE" IN {
+    type master;
+    file "reverse.$DOMAIN_NAME";
+    allow-update { none; };
+};
+EOL
+
+cat <<EOL > /var/named/forward.$DOMAIN_NAME
+\$TTL 86400
+@   IN  SOA     ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
+            2024052101 ; Serial
+            3600       ; Refresh
+            1800       ; Retry
+            604800     ; Expire
+            86400 )    ; Minimum TTL
+;
+@       IN  NS      ns.$DOMAIN_NAME.
+ns      IN  A       $IP_ADDRESS
+@       IN  A       $IP_ADDRESS
+*       IN  A       $IP_ADDRESS
+mail    IN  A       $IP_ADDRESS
+EOL
+
+cat <<EOL > /var/named/reverse.$DOMAIN_NAME
+\$TTL 86400
+@   IN  SOA     ns.$DOMAIN_NAME. root.$DOMAIN_NAME. (
+            2024052101 ; Serial
+            3600       ; Refresh
+            1800       ; Retry
+            604800     ; Expire
+            86400 )    ; Minimum TTL
+;
+@       IN  NS      ns.$DOMAIN_NAME.
+$REVERSE_IP       IN  PTR     $DOMAIN_NAME.
+EOL
+
+echo 'OPTIONS="-4"' >> /etc/sysconfig/named
+
+cat <<EOL > /etc/hosts
+$IP_ADDRESS $DOMAIN_NAME
+127.0.0.1   $DOMAIN_NAME
+EOL
+
+cat <<EOL > /etc/hostname
+$DOMAIN_NAME
+EOL
+
+    systemctl start named
+    systemctl enable named
+
+    systemctl restart named 
+
+cat <<EOL > /etc/resolv.conf
+nameserver  $DOMAIN_NAME
+options edns0 trust-ad
+search home.arpa
+EOL
 }
 
 basic_root_website(){
     DOMAIN_NAME=$1
-    EMAIL=$2
     dnf -y install httpd
 
     # Create the directory for the root website
@@ -73,11 +190,122 @@ EOL
     firewall-cmd --add-service=http --permanent
     firewall-cmd --reload
 
-    # Install and configure SSL certificates
-    install_ssl_certificates $DOMAIN_NAME $EMAIL
+    certbot --apache -d $DOMAIN_NAME -d *.$DOMAIN_NAME --non-interactive --agree-tos --email admin@$DOMAIN_NAME
 
-    echo "Verifying HTTPS Access..."
-    curl -k https://$DOMAIN_NAME
+    # Verify HTTP Access
+    echo "Verifying HTTP Access..."
+    curl http://$DOMAIN_NAME
+}
+
+
+basic_db(){
+    DOMAIN_NAME=$1
+    dnf -y install mariadb-server phpmyadmin
+    systemctl start mariadb
+    systemctl enable mariadb
+
+    mysql_secure_installation <<EOF
+
+y
+rootpassword
+rootpassword
+y
+y
+y
+y
+EOF
+
+    firewall-cmd --add-service=mysql --permanent
+    firewall-cmd --reload
+
+    ln -s /usr/share/phpmyadmin /mnt/raid5_web/root/phpmyadmin
+
+    # Define the configuration file path
+    conf_file="/etc/httpd/conf.d/phpMyAdmin.conf"
+
+    # Use sed to find and replace the line starting with 'Require'
+    sed -i '/^Require/c\Require ip 127.0.0.1 192.168.1.0/24' "$conf_file"
+
+    # Restart Apache to apply changes
+    systemctl restart httpd
+
+    echo "Configuration updated and Apache restarted."
+
+    ausearch -c 'mariadbd' --raw | audit2allow -M my-mariadbd
+    semodule -X 300 -i my-mariadbd.pp
+
+    echo "<html><body><h1>PHPMyAdmin installed. <a href='/phpmyadmin'>Access it here</a></h1></body></html>" > /mnt/raid5_web/root/index.php
+
+    systemctl restart httpd
+}
+
+basic_mail(){
+    DOMAIN_NAME=$1
+    dnf -y install postfix dovecot roundcubemail
+
+    # Configure Postfix
+    sed -i 's/#myhostname = host.domain.tld/myhostname = mail.'"$DOMAIN_NAME"'/' /etc/postfix/main.cf
+    sed -i 's/#mydomain = domain.tld/mydomain = '"$DOMAIN_NAME"'/' /etc/postfix/main.cf
+    sed -i 's/#myorigin = $mydomain/myorigin = $mydomain/' /etc/postfix/main.cf
+    sed -i 's/inet_interfaces = localhost/inet_interfaces = all/' /etc/postfix/main.cf
+    sed -i 's/#home_mailbox = Maildir\//home_mailbox = Maildir\//' /etc/postfix/main.cf
+
+    systemctl start postfix
+    systemctl enable postfix
+
+    # Configure Dovecot
+    sed -i 's/#protocols = imap pop3 lmtp/protocols = imap pop3 lmtp/' /etc/dovecot/dovecot.conf
+    sed -i 's/#mail_location =/mail_location = maildir:~\/Maildir/' /etc/dovecot/conf.d/10-mail.conf
+
+    systemctl start dovecot
+    systemctl enable dovecot
+
+    # Configure Roundcube
+    cat <<EOL > /etc/httpd/conf.d/roundcube.conf
+Alias /roundcube /usr/share/roundcubemail
+<Directory /usr/share/roundcubemail>
+    Options -Indexes
+    AllowOverride None
+    Require all granted
+</Directory>
+EOL
+
+    mysql -u root -prootpassword -e "CREATE DATABASE roundcubemail;"
+    mysql -u root -prootpassword -e "GRANT ALL PRIVILEGES ON roundcubemail.* TO 'roundcube'@'localhost' IDENTIFIED BY 'roundcube_pass';"
+    mysql -u root -prootpassword roundcubemail < /usr/share/doc/roundcubemail*/SQL/mysql.initial.sql
+
+    # Configure Roundcube database connection
+    sed -i "s|^\(\$config\['db_dsnw'\] = \).*|\1'mysql://roundcube:roundcube_pass@localhost/roundcubemail';|" /etc/roundcubemail/config.inc.php
+
+    systemctl restart httpd
+
+    firewall-cmd --add-service=smtp --permanent
+    firewall-cmd --add-service=imap --permanent
+    firewall-cmd --add-service=pop3 --permanent
+    firewall-cmd --reload
+
+    echo "Roundcube webmail setup is complete."
+}
+
+basic_setup(){
+    echo "Installing required components"
+    read -p "Enter the IP address : " IP_ADDRESS
+    read -p "Enter the server domain name (e.g., test.toto) : " DOMAIN_NAME
+    basic_dns $IP_ADDRESS $DOMAIN_NAME
+    echo "Main DNS configuration done ... "
+
+    basic_root_website $DOMAIN_NAME
+    echo "Web server configuration done ... "
+
+    basic_db $DOMAIN_NAME
+    echo "Database server configuration done ... "
+
+    basic_mail $DOMAIN_NAME
+    echo "Mail server configuration done ... "
+
+    echo "Press any key to exit..."
+    read -n 1 -s key
+    clear
 }
 
 add_user(){
@@ -145,34 +373,31 @@ EOL
     restorecon -Rv /mnt
     systemctl restart httpd
 
-    # Install and configure SSL certificates for the user
-    install_ssl_certificates $USERNAME.$DOMAIN_NAME $EMAIL
-
     echo "User $USERNAME has been created with a mail account and a database."
-    echo "Mail can be accessed at https://mail.$USERNAME.$DOMAIN_NAME"
+    echo "Mail can be accessed at http://mail.$USERNAME.$DOMAIN_NAME"
 }
 
-basic_setup(){
-    echo "Installing required components"
-    read -p "Enter the IP address : " IP_ADDRESS
-    read -p "Enter the server domain name (e.g., test.toto) : " DOMAIN_NAME
-    read -p "Enter your email for SSL certificates : " EMAIL
-    basic_dns $IP_ADDRESS $DOMAIN_NAME
-    echo "Main DNS configuration done ... "
 
-    basic_root_website $DOMAIN_NAME $EMAIL
-    echo "Web server configuration done ... "
+remove_user(){
+    echo "Removing a user ... "
+    echo "Users list : "
+    pdbedit -L
+    read -p "Enter a user to delete: " USERNAME
+    userdel $USERNAME
+    smbpasswd -x $USERNAME
+    rm -rf /mnt/raid5_web/$USERNAME
+    mysql -u root -prootpassword -e "DROP DATABASE ${USERNAME}_db;"
+    rm -f /etc/httpd/conf.d/001-$USERNAME.conf
+    rm -rf /home/$USERNAME/Maildir
 
-    basic_db $DOMAIN_NAME
-    echo "Database server configuration done ... "
+    # Remove the user from the Roundcube database
+    mysql -u root -prootpassword -e "DELETE FROM roundcubemail.users WHERE username = '$USERNAME';"
 
-    basic_mail $DOMAIN_NAME
-    echo "Mail server configuration done ... "
-
-    echo "Press any key to exit..."
-    read -n 1 -s key
-    clear
+    systemctl restart httpd
+    echo "User $USERNAME and their data have been removed."
 }
+
+
 
 main() {
     while true; do
