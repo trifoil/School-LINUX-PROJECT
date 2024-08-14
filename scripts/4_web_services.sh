@@ -223,7 +223,56 @@ EOF
     conf_file="/etc/httpd/conf.d/phpMyAdmin.conf"
 
     # Use sed to find and replace the line starting with 'Require'
-    sed -i '/^Require/c\Require ip 127.0.0.1 192.168.1.0/24' "$conf_file"
+    # sed -i '/^Require/c\Require ip 127.0.0.1 192.168.1.0/24' "$conf_file"
+
+cat <<EOL > $conf_file
+# phpMyAdmin - Web based MySQL browser written in php
+# 
+# Allows only localhost by default
+#
+# But allowing phpMyAdmin to anyone other than localhost should be considered
+# dangerous unless properly secured by SSL
+
+Alias /phpmyadmin /usr/share/phpMyAdmin
+
+<Directory /usr/share/phpMyAdmin/>
+   AddDefaultCharset UTF-8
+
+   Require ip 127.0.0.1 192.168.1.0/24
+</Directory>
+
+<Directory /usr/share/phpMyAdmin/setup/>
+   Require local
+</Directory>
+
+# These directories do not require access over HTTP - taken from the original
+# phpMyAdmin upstream tarball
+#
+<Directory /usr/share/phpMyAdmin/libraries/>
+    Require all denied
+</Directory>
+
+<Directory /usr/share/phpMyAdmin/templates/>
+    Require all denied
+</Directory>
+
+<Directory /usr/share/phpMyAdmin/setup/lib/>
+    Require all denied
+</Directory>
+
+<Directory /usr/share/phpMyAdmin/setup/frames/>
+    Require all denied
+</Directory>
+
+# This configuration prevents mod_security at phpMyAdmin directories from
+# filtering SQL etc.  This may break your mod_security implementation.
+#
+#<IfModule mod_security.c>
+#    <Directory /usr/share/phpMyAdmin/>
+#        SecRuleInheritance Off
+#    </Directory>
+#</IfModule>
+EOL
 
     # Restart Apache to apply changes
     systemctl restart httpd
