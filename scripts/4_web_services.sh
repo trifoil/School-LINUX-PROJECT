@@ -159,7 +159,8 @@ basic_root_website(){
     mkdir -p /mnt/raid5_web/root
 
     # Create a simple index.php file for the root website
-    echo "<html><body><h1>Welcome to $DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/root/index.php
+    echo "<html><body><h1>Welcome to $DOMAIN_NAME</h1></body></html>" > /mnt/raid5_web/root/index.php
+    #echo "<html><body><h1>Welcome to $DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/root/index.php
 
     # Set ownership and permissions
     chown -R apache:apache /mnt/raid5_web/root
@@ -232,8 +233,7 @@ EOF
     ausearch -c 'mariadbd' --raw | audit2allow -M my-mariadbd
     semodule -X 300 -i my-mariadbd.pp
 
-    #echo "<html><body><h1>PHPMyAdmin installed. <a href='/phpmyadmin'>Access it here</a></h1></body></html>" > /mnt/raid5_web/root/index.php
-    echo "<html><body><h1>PHPMyAdmin installed.</h1></body></html>" > /mnt/raid5_web/root/index.php
+    echo "<html><body><h1>PHPMyAdmin installed. <a href='/phpmyadmin'>Access it here</a></h1></body></html>" > /mnt/raid5_web/root/index.php
 
     systemctl restart httpd
 }
