@@ -395,6 +395,8 @@ remove_user(){
     echo "User $USERNAME and their data have been removed."
 }
 
+
+
 main() {
     while true; do
         display_menu
