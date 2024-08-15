@@ -153,7 +153,9 @@ EOL
 
 basic_root_website(){
     DOMAIN_NAME=$1
-    dnf -y install httpd
+
+    # Install Apache HTTP server and mod_ssl for SSL support
+    dnf -y install httpd mod_ssl
 
     # Create the directory for the root website
     mkdir -p /mnt/raid5_web/root
@@ -168,7 +170,7 @@ basic_root_website(){
 
     chmod -R 755 /mnt/raid5_web/root
 
-    # Set up the virtual host for the root domain
+    # Set up the virtual host for the root domain (HTTP)
     cat <<EOL > /etc/httpd/conf.d/root.conf
 <VirtualHost *:80>
     ServerName $DOMAIN_NAME
@@ -187,12 +189,12 @@ basic_root_website(){
 </VirtualHost>
 EOL
 
-    # Generate a self-signed SSL certificate
+    # Generate a wildcard self-signed SSL certificate
     mkdir -p /etc/httpd/ssl
     openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
         -keyout /etc/httpd/ssl/$DOMAIN_NAME.key \
         -out /etc/httpd/ssl/$DOMAIN_NAME.crt \
-        -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=$DOMAIN_NAME"
+        -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=*.$DOMAIN_NAME"
 
     # Set up the virtual host for HTTPS
     cat <<EOL > /etc/httpd/conf.d/root-ssl.conf
@@ -213,19 +215,23 @@ EOL
 </VirtualHost>
 EOL
 
+    # Start and enable the Apache HTTP server
     systemctl start httpd
     systemctl enable httpd
     systemctl restart httpd
 
+    # Open the HTTP and HTTPS ports in the firewall
     firewall-cmd --add-service=http --permanent
     firewall-cmd --add-service=https --permanent
     firewall-cmd --reload
 
-    # Verify HTTP Access
+    # Verify HTTP and HTTPS Access
     echo "Verifying HTTP Access..."
-    curl http://$DOMAIN_NAME
-}
+    curl -I http://$DOMAIN_NAME
 
+    echo "Verifying HTTPS Access..."
+    curl -I https://$DOMAIN_NAME
+}
 
 basic_db(){
     DOMAIN_NAME=$1

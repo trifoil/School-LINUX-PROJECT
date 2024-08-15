@@ -181,6 +181,35 @@ basic_root_website(){
     DirectoryIndex index.php
     ErrorLog /var/log/httpd/root_error.log
     CustomLog /var/log/httpd/root_access.log combined
+
+    # Redirect all traffic to HTTPS
+    Redirect "/" "https://$DOMAIN_NAME/"
+</VirtualHost>
+EOL
+
+    # Generate a self-signed SSL certificate
+    mkdir -p /etc/httpd/ssl
+    openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
+        -keyout /etc/httpd/ssl/$DOMAIN_NAME.key \
+        -out /etc/httpd/ssl/$DOMAIN_NAME.crt \
+        -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=$DOMAIN_NAME"
+
+    # Set up the virtual host for HTTPS
+    cat <<EOL > /etc/httpd/conf.d/root-ssl.conf
+<VirtualHost *:443>
+    ServerName $DOMAIN_NAME
+    ServerAlias *.$DOMAIN_NAME
+    DocumentRoot /mnt/raid5_web/root
+    <Directory /mnt/raid5_web/root>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    DirectoryIndex index.php
+    SSLEngine on
+    SSLCertificateFile /etc/httpd/ssl/$DOMAIN_NAME.crt
+    SSLCertificateKeyFile /etc/httpd/ssl/$DOMAIN_NAME.key
+    ErrorLog /var/log/httpd/root_ssl_error.log
+    CustomLog /var/log/httpd/root_ssl_access.log combined
 </VirtualHost>
 EOL
 
@@ -189,6 +218,7 @@ EOL
     systemctl restart httpd
 
     firewall-cmd --add-service=http --permanent
+    firewall-cmd --add-service=https --permanent
     firewall-cmd --reload
 
     # Verify HTTP Access
