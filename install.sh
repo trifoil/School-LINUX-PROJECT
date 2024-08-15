@@ -10,7 +10,7 @@ updatedb
 systemctl enable --now cockpit.socket
 firewall-cmd --permanent --zone=public --add-service=cockpit
 firewall-cmd --reload
-dnf -y install nfs-utils samba bind chrony fail2ban vsftpd rsync clamav clamd clamav-update bind-utils httpd php php-mysqlnd mariadb-server phpmyadmin  
+dnf -y install nfs-utils samba bind chrony fail2ban vsftpd rsync clamav clamd clamav-update bind-utils httpd php php-mysqlnd mariadb-server phpmyadmin mod_ssl
 
 chmod +x -R scripts
 

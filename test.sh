@@ -181,6 +181,35 @@ basic_root_website(){
     DirectoryIndex index.php
     ErrorLog /var/log/httpd/root_error.log
     CustomLog /var/log/httpd/root_access.log combined
+
+    # Redirect all traffic to HTTPS
+    Redirect "/" "https://$DOMAIN_NAME/"
+</VirtualHost>
+EOL
+
+    # Generate a self-signed SSL certificate
+    mkdir -p /etc/httpd/ssl
+    openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
+        -keyout /etc/httpd/ssl/$DOMAIN_NAME.key \
+        -out /etc/httpd/ssl/$DOMAIN_NAME.crt \
+        -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=$DOMAIN_NAME"
+
+    # Set up the virtual host for HTTPS
+    cat <<EOL > /etc/httpd/conf.d/root-ssl.conf
+<VirtualHost *:443>
+    ServerName $DOMAIN_NAME
+    ServerAlias *.$DOMAIN_NAME
+    DocumentRoot /mnt/raid5_web/root
+    <Directory /mnt/raid5_web/root>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    DirectoryIndex index.php
+    SSLEngine on
+    SSLCertificateFile /etc/httpd/ssl/$DOMAIN_NAME.crt
+    SSLCertificateKeyFile /etc/httpd/ssl/$DOMAIN_NAME.key
+    ErrorLog /var/log/httpd/root_ssl_error.log
+    CustomLog /var/log/httpd/root_ssl_access.log combined
 </VirtualHost>
 EOL
 
@@ -189,6 +218,7 @@ EOL
     systemctl restart httpd
 
     firewall-cmd --add-service=http --permanent
+    firewall-cmd --add-service=https --permanent
     firewall-cmd --reload
 
     # Verify HTTP Access
@@ -223,7 +253,56 @@ EOF
     conf_file="/etc/httpd/conf.d/phpMyAdmin.conf"
 
     # Use sed to find and replace the line starting with 'Require'
-    sed -i '/^Require/c\Require ip 127.0.0.1 192.168.1.0/24' "$conf_file"
+    # sed -i '/^Require/c\Require ip 127.0.0.1 192.168.1.0/24' "$conf_file"
+
+cat <<EOL > $conf_file
+# phpMyAdmin - Web based MySQL browser written in php
+# 
+# Allows only localhost by default
+#
+# But allowing phpMyAdmin to anyone other than localhost should be considered
+# dangerous unless properly secured by SSL
+
+Alias /phpmyadmin /usr/share/phpMyAdmin
+
+<Directory /usr/share/phpMyAdmin/>
+   AddDefaultCharset UTF-8
+
+   Require ip 127.0.0.1 192.168.1.0/24
+</Directory>
+
+<Directory /usr/share/phpMyAdmin/setup/>
+   Require local
+</Directory>
+
+# These directories do not require access over HTTP - taken from the original
+# phpMyAdmin upstream tarball
+#
+<Directory /usr/share/phpMyAdmin/libraries/>
+    Require all denied
+</Directory>
+
+<Directory /usr/share/phpMyAdmin/templates/>
+    Require all denied
+</Directory>
+
+<Directory /usr/share/phpMyAdmin/setup/lib/>
+    Require all denied
+</Directory>
+
+<Directory /usr/share/phpMyAdmin/setup/frames/>
+    Require all denied
+</Directory>
+
+# This configuration prevents mod_security at phpMyAdmin directories from
+# filtering SQL etc.  This may break your mod_security implementation.
+#
+#<IfModule mod_security.c>
+#    <Directory /usr/share/phpMyAdmin/>
+#        SecRuleInheritance Off
+#    </Directory>
+#</IfModule>
+EOL
 
     # Restart Apache to apply changes
     systemctl restart httpd
@@ -271,7 +350,7 @@ EOL
 
     mysql -u root -prootpassword -e "CREATE DATABASE roundcubemail;"
     mysql -u root -prootpassword -e "GRANT ALL PRIVILEGES ON roundcubemail.* TO 'roundcube'@'localhost' IDENTIFIED BY 'roundcube_pass';"
-    mysql -u root -prootpassword roundcubemail < /usr/share/roundcubemail/SQL/mysql.initial.sql
+    mysql -u root -prootpassword roundcubemail < /usr/share/doc/roundcubemail*/SQL/mysql.initial.sql
 
     # Configure Roundcube database connection
     sed -i "s|^\(\$config\['db_dsnw'\] = \).*|\1'mysql://roundcube:roundcube_pass@localhost/roundcubemail';|" /etc/roundcubemail/config.inc.php
