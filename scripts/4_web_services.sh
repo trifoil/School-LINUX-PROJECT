@@ -153,7 +153,9 @@ EOL
 
 basic_root_website(){
     DOMAIN_NAME=$1
-    dnf -y install httpd
+
+    # Install Apache HTTP server and mod_ssl for SSL support
+    dnf -y install httpd mod_ssl
 
     # Create the directory for the root website
     mkdir -p /mnt/raid5_web/root
@@ -168,7 +170,7 @@ basic_root_website(){
 
     chmod -R 755 /mnt/raid5_web/root
 
-    # Set up the virtual host for the root domain
+    # Set up the virtual host for the root domain (HTTP)
     cat <<EOL > /etc/httpd/conf.d/root.conf
 <VirtualHost *:80>
     ServerName $DOMAIN_NAME
@@ -187,12 +189,12 @@ basic_root_website(){
 </VirtualHost>
 EOL
 
-    # Generate a self-signed SSL certificate
+    # Generate a wildcard self-signed SSL certificate
     mkdir -p /etc/httpd/ssl
     openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
         -keyout /etc/httpd/ssl/$DOMAIN_NAME.key \
         -out /etc/httpd/ssl/$DOMAIN_NAME.crt \
-        -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=$DOMAIN_NAME"
+        -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=*.$DOMAIN_NAME"
 
     # Set up the virtual host for HTTPS
     cat <<EOL > /etc/httpd/conf.d/root-ssl.conf
@@ -213,19 +215,23 @@ EOL
 </VirtualHost>
 EOL
 
+    # Start and enable the Apache HTTP server
     systemctl start httpd
     systemctl enable httpd
     systemctl restart httpd
 
+    # Open the HTTP and HTTPS ports in the firewall
     firewall-cmd --add-service=http --permanent
     firewall-cmd --add-service=https --permanent
     firewall-cmd --reload
 
-    # Verify HTTP Access
+    # Verify HTTP and HTTPS Access
     echo "Verifying HTTP Access..."
-    curl http://$DOMAIN_NAME
-}
+    curl -I http://$DOMAIN_NAME
 
+    echo "Verifying HTTPS Access..."
+    curl -I https://$DOMAIN_NAME
+}
 
 basic_db(){
     DOMAIN_NAME=$1
@@ -388,7 +394,7 @@ basic_setup(){
 
 add_user(){
     echo "Adding a user ..."
-    read -p "Enter the server domain name (e.g., test.toto) : " DOMAIN_NAME
+    read -p "Enter the server domain name (e.g., example.com) : " DOMAIN_NAME
     read -p "Enter a username: " USERNAME
     read -sp "Enter a password: " PASSWORD
     echo
@@ -398,7 +404,7 @@ add_user(){
     useradd $USERNAME
     echo "$USERNAME:$PASSWORD" | chpasswd
     smbpasswd -a $USERNAME
-    echo "smb user created"
+    echo "SMB user created"
 
     chown -R $USERNAME:$USERNAME "$DIR"
     chmod -R 755 "$DIR"
@@ -410,7 +416,7 @@ add_user(){
     # Create a simple index.php file in the user's directory
     echo "<html><body><h1>Welcome, $USERNAME!</h1><p>Your database name is ${USERNAME}_db.</p><?php phpinfo(); ?></body></html>" > "$DIR/index.php"
 
-    # Set up the virtual host for the user's website
+    # Set up the virtual host for the user's website (HTTP with redirect to HTTPS)
     cat <<EOL > /etc/httpd/conf.d/001-$USERNAME.conf
 <VirtualHost *:80>
     ServerName $USERNAME.$DOMAIN_NAME
@@ -422,10 +428,28 @@ add_user(){
     DirectoryIndex index.php
     ErrorLog /var/log/httpd/${USERNAME}_error.log
     CustomLog /var/log/httpd/${USERNAME}_access.log combined
+
+    # Redirect all HTTP traffic to HTTPS
+    Redirect "/" "https://$USERNAME.$DOMAIN_NAME/"
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName $USERNAME.$DOMAIN_NAME
+    DocumentRoot /mnt/raid5_web/$USERNAME
+    <Directory /mnt/raid5_web/$USERNAME>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    DirectoryIndex index.php
+    SSLEngine on
+    SSLCertificateFile /etc/httpd/ssl/$DOMAIN_NAME.crt
+    SSLCertificateKeyFile /etc/httpd/ssl/$DOMAIN_NAME.key
+    ErrorLog /var/log/httpd/${USERNAME}_ssl_error.log
+    CustomLog /var/log/httpd/${USERNAME}_ssl_access.log combined
 </VirtualHost>
 EOL
 
-    # Set up the virtual host for the user's mail subdomain
+    # Set up the virtual host for the user's mail subdomain (HTTP with redirect to HTTPS)
     cat <<EOL > /etc/httpd/conf.d/mail-$USERNAME.conf
 <VirtualHost *:80>
     ServerName mail.$USERNAME.$DOMAIN_NAME
@@ -437,6 +461,24 @@ EOL
     DirectoryIndex index.php
     ErrorLog /var/log/httpd/mail_${USERNAME}_error.log
     CustomLog /var/log/httpd/mail_${USERNAME}_access.log combined
+
+    # Redirect all HTTP traffic to HTTPS
+    Redirect "/" "https://mail.$USERNAME.$DOMAIN_NAME/"
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName mail.$USERNAME.$DOMAIN_NAME
+    DocumentRoot /usr/share/roundcubemail
+    <Directory /usr/share/roundcubemail>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    DirectoryIndex index.php
+    SSLEngine on
+    SSLCertificateFile /etc/httpd/ssl/$DOMAIN_NAME.crt
+    SSLCertificateKeyFile /etc/httpd/ssl/$DOMAIN_NAME.key
+    ErrorLog /var/log/httpd/mail_${USERNAME}_ssl_error.log
+    CustomLog /var/log/httpd/mail_${USERNAME}_ssl_access.log combined
 </VirtualHost>
 EOL
 
@@ -447,13 +489,18 @@ EOL
     # Add the user to the Roundcube database
     mysql -u root -prootpassword -e "INSERT INTO roundcubemail.users (username, mail_host, created) VALUES ('$USERNAME', 'localhost', NOW());"
 
+    # Ensure proper SELinux context and restart Apache
     semanage fcontext -a -e /var/www /mnt/raid5_web
     restorecon -Rv /mnt
     systemctl restart httpd
 
     echo "User $USERNAME has been created with a mail account and a database."
-    echo "Mail can be accessed at http://mail.$USERNAME.$DOMAIN_NAME"
+    echo "Mail can be accessed at https://mail.$USERNAME.$DOMAIN_NAME"
 }
+
+# Example usage
+# add_user
+
 
 
 remove_user(){
