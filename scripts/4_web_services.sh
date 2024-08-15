@@ -498,10 +498,6 @@ EOL
     echo "Mail can be accessed at https://mail.$USERNAME.$DOMAIN_NAME"
 }
 
-# Example usage
-# add_user
-
-
 
 remove_user(){
     echo "Removing a user ... "
