@@ -37,6 +37,8 @@ display_menu() {
     echo ""
 }
 
+
+
 set_hostname(){
 
 }
@@ -78,7 +80,7 @@ logs(){
 }
 
 # Main function
-main() {
+
     while true; do
         clear
         display_menu
@@ -86,6 +88,17 @@ main() {
         case $choice in
             0) set_hostname ;;
             1) raid ;;
+            2) ssh ;;
+            3) unauthshare ;;
+            4) webservices ;;
+            5) usersmanagement ;;
+            6) ntp ;;
+            7) security ;;
+            8) backup ;;
+            9) logs ;;
+            x) testing ;;
+            q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
+            *) clear && echo "Invalid choice. Please enter a valid option." ;;
             2) ssh ;;
             3) unauthshare ;;
             4) webservices ;;
