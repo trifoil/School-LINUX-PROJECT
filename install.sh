@@ -66,39 +66,39 @@ set_hostname() {
 }
 
 raid(){
-
+    echo "Starting raid"
 }
 
 ssh(){
-
+    echo "Starting ssh"
 }
 
 unauthshare(){
-
+    echo "Starting unauthshare"
 }
 
 webservices(){
-
+    echo "Starting webservices"
 }
 
 usersmanagement(){
-
+    echo "Starting usersmanagement"
 }
 
 ntp(){
-
+    echo "Starting ntp"
 }
 
 security(){
-
+    echo "Starting security"
 }
 
 backup(){
-
+    echo "Starting backup"
 }
 
 logs(){
-
+    echo "Starting logs"
 }
 
 # Main function
