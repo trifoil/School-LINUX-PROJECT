@@ -104,11 +104,8 @@ if ! [[ $num_disks =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-# List all disks that are empty and unformatted
-empty_disks=$(lsblk -d -n -o NAME,SIZE,TYPE | awk '$3=="disk" && $2=="0" {print $1}')
-for disk in $empty_disks; do
-    echo "Empty disk: $disk"
-done
+# List all physical disks on the system
+lsblk -d -n -o NAME,SIZE,TYPE | awk '$3=="disk" {print $1}'
 
 echo "RAID created successfully"
 echo "Press any key to continue..."
