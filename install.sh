@@ -88,41 +88,38 @@ raid(){
     read -p "Enter your choice: " raid_choice
     case $raid_choice in
         1) echo "Creating RAID..."
-# Add your RAID configuration code here
+           # Add your RAID configuration code here
+
+
 
 # creating the lvm 
+
+# Add your RAID configuration code here
+
+read -p "Enter the number of disks for RAID: " num_disks
+
+# Validate the input
+if ! [[ $num_disks =~ ^[0-9]+$ ]]; then
+    echo "Invalid input. Please enter a valid number."
+    exit 1
+fi
+
+# List all disks that are empty and unformatted
+empty_disks=$(lsblk -d -n -o NAME,SIZE,TYPE | awk '$3=="disk" && $2=="0" {print $1}')
+for disk in $empty_disks; do
+    echo "Empty disk: $disk"
+done
+
+echo "RAID created successfully"
+echo "Press any key to continue..."
+read -n 1 -s key
+clear
 
 # Install necessary packages
 sudo dnf install lvm2 mdadm -y
 
-# Prompt user for disk selection and display disk sizes
-echo "Available disks:"
-lsblk -d -n -o NAME,SIZE | awk '{print NR ". " $1 " (" $2 ")"}'
-read -p "Enter the numbers of the disks you want to include in the RAID (separated by spaces): " disk_numbers
-
-# Create an array of selected disk names
-selected_disks=()
-for number in $disk_numbers; do
-    disk_name=$(lsblk -d -n -o NAME | awk "NR==$number")
-    selected_disks+=($disk_name)
-done
-
-# Print the selected disks for debugging
-echo "Selected disks: ${selected_disks[@]}"
-
-# Check if the selected disks exist
-for disk in "${selected_disks[@]}"; do
-    if [ ! -b "/dev/$disk" ]; then
-        echo "Error: Disk /dev/$disk does not exist."
-        exit 1
-    fi
-done
-
-# Create a RAID 5 array with the selected devices
-sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=${#selected_disks[@]} ${selected_disks[@]}
-
-# Wait for the RAID array to be created
-sleep 5
+# Create a RAID 5 array with the specified number of devices
+sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=$num_disks /dev/sdb /dev/sdc /dev/sdd
 
 # Create a physical volume on the RAID array
 sudo pvcreate /dev/md0
@@ -169,7 +166,7 @@ echo "RAID created successfully"
 echo "Press any key to continue..."
 read -n 1 -s key
 clear
-        ;;
+           ;;
         2) echo "Displaying current RAID..."
            # Add your code to display current RAID configuration here
            echo "Press any key to continue..."
