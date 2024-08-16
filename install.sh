@@ -87,7 +87,10 @@ raid(){
     display_raid_menu
     read -p "Enter your choice: " raid_choice
     case $raid_choice in
-        1) echo "Creating RAID..."
+        1) 
+sudo dnf install lvm2 mdadm -y
+
+echo "Creating RAID..."
            # Add your RAID configuration code here
 
 
@@ -96,27 +99,39 @@ raid(){
 
 # Add your RAID configuration code here
 
-read -p "Enter the number of disks for RAID: " num_disks
-
-# Validate the input
-if ! [[ $num_disks =~ ^[0-9]+$ ]]; then
-    echo "Invalid input. Please enter a valid number."
-    exit 1
-fi
+# List all physical disks on the system
+lsblk -d -n -o NAME,SIZE,TYPE | awk '$3=="disk" {print $1}'
 
 # List all physical disks on the system
 lsblk -d -n -o NAME,SIZE,TYPE | awk '$3=="disk" {print $1}'
 
-echo "RAID created successfully"
-echo "Press any key to continue..."
-read -n 1 -s key
-clear
+# Ask the user to select disks
+read -p "Enter the disks you want to use (separated by spaces): " disks
 
-# Install necessary packages
-sudo dnf install lvm2 mdadm -y
+# Create a temporary table to store the selected disks
+temp_table=$(mktemp)
+
+# Loop through the selected disks and add them to the temporary table
+for disk in $disks; do
+    echo "$disk" >> "$temp_table"
+done
+
+# Use the temporary table to perform further operations
+while IFS= read -r disk; do
+    # Add your RAID configuration code here for each selected disk
+    echo "Configuring RAID for disk $disk"
+    # ...
+done < "$temp_table"
+
+# Count the number of disks in the temporary table
+num_disks=$(wc -l < "$temp_table")
 
 # Create a RAID 5 array with the specified number of devices
-sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=$num_disks /dev/sdb /dev/sdc /dev/sdd
+sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=$num_disks $(cat "$temp_table")
+
+# Remove the temporary table
+rm "$temp_table"
+
 
 # Create a physical volume on the RAID array
 sudo pvcreate /dev/md0
