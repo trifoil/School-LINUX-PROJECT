@@ -59,6 +59,20 @@ display_raid_menu() {
     echo ""
 }
 
+display_unauth_share_menu() {
+    echo ""
+    echo "|----------------------------------------------------------------------|"
+    echo -e "|                ${BLUE}Welcome to the unauth share assistant ${NC}                |"
+    echo "|              Please select the tool you want to use                  |"
+    echo "|----------------------------------------------------------------------|"
+    echo "| 0. Activate NFS                                                      |"
+    echo "| 1. Activate SMB                                                      |"
+    echo "|----------------------------------------------------------------------|"
+    echo "| q. Quit                                                              |"
+    echo "|----------------------------------------------------------------------|"
+    echo ""
+}
+
 set_hostname() {
     clear
     display_hostname_menu
@@ -84,141 +98,124 @@ set_hostname() {
 
 raid(){
     clear
-    display_raid_menu
-    read -p "Enter your choice: " raid_choice
-    case $raid_choice in
-        1) 
-sudo dnf install lvm2 mdadm -y
-
-echo "Creating RAID..."
-           # Add your RAID configuration code here
-
-
-
-# creating the lvm 
-
-# Add your RAID configuration code here
-
-# List all physical disks on the system
-lsblk -d -n -o NAME,SIZE,TYPE | awk '$3=="disk" {print $1}'
-
-# List all physical disks on the system
-lsblk -d -n -o NAME,SIZE,TYPE | awk '$3=="disk" {print $1}'
-
-# Ask the user to select disks
-read -p "Enter the disks you want to use (separated by spaces): " disks
-
-# Create a temporary table to store the selected disks
-temp_table=$(mktemp)
-
-# Loop through the selected disks and add them to the temporary table
-for disk in $disks; do
-    echo "$disk" >> "$temp_table"
-done
-
-# Use the temporary table to perform further operations
-while IFS= read -r disk; do
-    # Add your RAID configuration code here for each selected disk
-    echo "Configuring RAID for disk $disk"
-    # ...
-done < "$temp_table"
-
-# Count the number of disks in the temporary table
-num_disks=$(wc -l < "$temp_table")
-
-# Create a RAID 5 array with the specified number of devices
-sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=$num_disks $(cat "$temp_table")
-
-# Remove the temporary table
-rm "$temp_table"
-
-
-# Create a physical volume on the RAID array
-sudo pvcreate /dev/md0
-
-# Create a volume group on the physical volume
-sudo vgcreate vg_raid5 /dev/md0
-
-# Create a logical volume named 'share' with a size of 500M
-sudo lvcreate -L 500M -n share vg_raid5
-
-# Format the 'share' logical volume with ext4 filesystem
-sudo mkfs.ext4 /dev/vg_raid5/share
-
-# Create a mount point for the 'share' logical volume
-sudo mkdir -p /mnt/raid5_share
-
-# Mount the 'share' logical volume
-sudo mount /dev/vg_raid5/share /mnt/raid5_share
-
-# Get the UUID of the 'share' logical volume and add it to fstab for automatic mounting
-sudo blkid /dev/vg_raid5/share | awk '{print $2 " /mnt/raid5_share ext4 defaults 0 0"}' | sudo tee -a /etc/fstab
-
-# Create a logical volume named 'web' with a size of 500M
-sudo lvcreate -L 500M -n web vg_raid5
-
-# Format the 'web' logical volume with ext4 filesystem
-sudo mkfs.ext4 /dev/vg_raid5/web
-
-# Create a mount point for the 'web' logical volume
-sudo mkdir -p /mnt/raid5_web
-
-# Mount the 'web' logical volume
-sudo mount /dev/vg_raid5/web /mnt/raid5_web
-
-# Get the UUID of the 'web' logical volume and add it to fstab for automatic mounting
-sudo blkid /dev/vg_raid5/web | awk '{print $2 " /mnt/raid5_web ext4 defaults 0 0"}' | sudo tee -a /etc/fstab
-
-systemctl daemon-reload
-
-# Verify mounts
-df -h
-
-echo "RAID created successfully"
-echo "Press any key to continue..."
-read -n 1 -s key
-clear
-           ;;
-        2) echo "Displaying current RAID..."
-           # Add your code to display current RAID configuration here
-           echo "Press any key to continue..."
-           read -n 1 -s key
-           clear
-           ;;
-        *) echo "Invalid choice. Please enter a valid option."
-           ;;
-    esac
+    echo "Creating RAID..."
 }
 
 ssh(){
+    clear
     echo "Starting ssh"
 }
 
 unauthshare(){
+    smb(){
+    echo "Installing Samba share"
+    sudo mkdir -p /mnt/raid5_share
+    dnf update -y
+    dnf -y install samba samba-client
+    systemctl enable smb --now
+    systemctl enable nmb --now    
+
+    firewall-cmd --permanent --add-service=samba
+    firewall-cmd --reload
+
+    chown -R nobody:nobody /mnt/raid5_share
+    chmod -R 0777 /mnt/raid5_share
+    
+    cp scripts/3_unauth_share.conf /etc/samba/smb.unauth.conf
+    
+    PRIMARY_CONF="/etc/samba/smb.conf"
+    INCLUDE_LINE="include = /etc/samba/smb.unauth.conf"
+
+    # Check if the include line already exists in the primary configuration file
+    if ! grep -Fxq "$INCLUDE_LINE" "$PRIMARY_CONF"; then
+        # If not, append the include line to the end of the primary configuration file
+        echo "$INCLUDE_LINE" >> "$PRIMARY_CONF"
+        echo "Include line added to $PRIMARY_CONF"
+    else
+        echo "Include line already exists in $PRIMARY_CONF"
+    fi
+
+    # SELINUX RAHHHHHHHHHHH
+    /sbin/restorecon -R -v /mnt/raid5_share
+    setsebool -P samba_export_all_rw 1
+
+    systemctl restart smb
+    systemctl restart nmb
+
+    echo "Samba services restarted"
+
+    echo "Press any key to continue..."
+    read -n 1 -s key
+	clear
+}
+
+nfs(){
+    echo "Installing NFS share"
+    sudo mkdir -p /mnt/raid5_share
+    dnf update -y
+    dnf -y install nfs-utils
+    systemctl enable nfs-server --now
+
+    firewall-cmd --permanent --add-service=nfs
+    firewall-cmd --permanent --add-service=mountd
+    firewall-cmd --permanent --add-service=rpc-bind
+    firewall-cmd --reload
+
+    echo "/mnt/raid5_share *(rw,sync,no_root_squash)" > /etc/exports
+
+    exportfs -a
+
+    systemctl restart nfs-server
+
+    echo "NFS services restarted"
+
+    echo "Press any key to continue..."
+    read -n 1 -s key
+    clear
+}
+
+    clear
     echo "Starting unauthshare"
+    while true; do
+        display_menu
+        read -p "Enter your choice: " choice
+        case $choice in
+            0) nfs ;;
+            1) smb ;;
+            q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
+            *) clear && echo "Invalid choice. Please enter a valid option." ;;
+        esac
+    done
+
 }
 
 webservices(){
+    clear
     echo "Starting webservices"
 }
 
 usersmanagement(){
+    clear
     echo "Starting usersmanagement"
 }
 
 ntp(){
+    clear
     echo "Starting ntp"
 }
 
 security(){
+    clear
     echo "Starting security"
 }
 
 backup(){
+    clear
     echo "Starting backup"
 }
 
 logs(){
+    clear
     echo "Starting logs"
 }
 
