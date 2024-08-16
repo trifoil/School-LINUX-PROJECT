@@ -56,9 +56,15 @@ set_hostname() {
         1) read -p "Enter the new hostname: " new_hostname
            hostnamectl set-hostname $new_hostname
            echo "Hostname set to $new_hostname"
+           echo "Press any key to continue..."
+           read -n 1 -s key
+           clear
            ;;
         2) current_hostname=$(hostnamectl --static)
            echo "Current hostname: $current_hostname"
+               echo "Press any key to continue..."
+               read -n 1 -s key
+               clear
            ;;
         *) echo "Invalid choice. Please enter a valid option."
            ;;
