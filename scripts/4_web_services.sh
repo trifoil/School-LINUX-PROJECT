@@ -258,8 +258,6 @@ EOF
     # Define the configuration file path
     conf_file="/etc/httpd/conf.d/phpMyAdmin.conf"
 
-    # Use sed to find and replace the line starting with 'Require'
-    # sed -i '/^Require/c\Require ip 127.0.0.1 192.168.1.0/24' "$conf_file"
 
 cat <<EOL > $conf_file
 # phpMyAdmin - Web based MySQL browser written in php
@@ -272,9 +270,9 @@ cat <<EOL > $conf_file
 Alias /phpmyadmin /usr/share/phpMyAdmin
 
 <Directory /usr/share/phpMyAdmin/>
-   AddDefaultCharset UTF-8
+    AddDefaultCharset UTF-8
 
-   Require ip 127.0.0.1 192.168.1.0/24
+    Require all granted
 </Directory>
 
 <Directory /usr/share/phpMyAdmin/setup/>
