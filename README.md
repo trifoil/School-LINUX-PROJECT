@@ -57,3 +57,14 @@ Relabeled /mnt/raid5_web/joe from unconfined_u:object_r:unlabeled_t:s0 to unconf
 Relabeled /mnt/raid5_web/joe/index.php from unconfined_u:object_r:unlabeled_t:s0 to unconfined_u:object_r:httpd_sys_content_t:s0
 User joe has been created with a mail account and a database.
 Mail can be accessed at http://mail.joe.test.toto
+
+### fedora mount nfs
+
+```
+mkdir /mnt/nfs
+sudo mount -t nfs 192.168.1.102:/mnt/raid5_share /mnt/nfs
+sudo umount /mnt/nfs
+```
+
+### fedora mount samba
+

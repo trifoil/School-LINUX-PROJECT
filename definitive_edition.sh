@@ -134,8 +134,6 @@ unauthshare(){
    directory mask = 0777
    read only = no
 EOL
-
-    cp scripts/3_unauth_share.conf /etc/samba/smb.unauth.conf
     
     PRIMARY_CONF="/etc/samba/smb.conf"
     INCLUDE_LINE="include = /etc/samba/smb.unauth.conf"
