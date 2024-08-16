@@ -4,7 +4,7 @@ BLUE='\e[38;5;33m'
 NC='\033[0m'
 
 clear
-display_menu() {
+display_webservices() {
     echo ""
     echo "|----------------------------------------------------------------------|"
     echo -e "|                ${BLUE}Welcome To The User Management Menu ${NC}                  |"
@@ -19,18 +19,7 @@ display_menu() {
     echo ""
 }
 
-ip_set(){
-    INTERFACE=$1
-    ADDRESS=$2
-    nmcli connection modify "$INTERFACE" ipv4.method manual
-    nmcli connection modify "$INTERFACE" ipv4.addresses "$ADDRESS/24"
-    nmcli connection up "$INTERFACE"
-    arping -c 3 -I $INTERFACE $ADDRESS
-    echo "Done..."
-    echo "Press any key to continue..."
-    read -n 1 -s key
-    clear
-}
+
 
 backup_file(){
     ORIGINAL_FILE=$1
@@ -499,7 +488,32 @@ EOL
 # Example usage
 # add_user
 
+mount_next_disk() {
+    # Get the next available disk
+    next_disk=$(lsblk -o NAME -n | grep -v "loop" | grep -v "sr" | tail -n 1)
 
+    # Check if the disk is already mounted
+    if mountpoint -q /mnt/$next_disk; then
+        echo "Disk $next_disk is already mounted."
+    else
+        # Create a physical volume on the disk
+        pvcreate /dev/$next_disk
+
+        # Create a volume group
+        vgcreate myvg /dev/$next_disk
+
+        # Create a logical volume
+        lvcreate -L 1G -n mylv myvg
+
+        # Format the logical volume with ext4 filesystem
+        mkfs.ext4 /dev/myvg/mylv
+
+        # Mount the logical volume
+        mount /dev/myvg/mylv /mnt/$next_disk
+
+        echo "Disk $next_disk has been mounted at /mnt/$next_disk."
+    fi
+}
 
 remove_user(){
     echo "Removing a user ... "
@@ -522,9 +536,9 @@ remove_user(){
 
 
 
-main() {
+web_services() {
     while true; do
-        display_menu
+        display_webservices
         read -p "Enter your choice: " choice
         case $choice in
             0) basic_setup ;;
@@ -536,4 +550,4 @@ main() {
     done
 }
 
-main
+
