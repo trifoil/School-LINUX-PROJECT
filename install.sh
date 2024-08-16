@@ -88,76 +88,87 @@ raid(){
     read -p "Enter your choice: " raid_choice
     case $raid_choice in
         1) echo "Creating RAID..."
-           # Add your RAID configuration code here
+# Add your RAID configuration code here
 
-        # creating the lvm 
+# creating the lvm 
 
-        # Install necessary packages
-        sudo dnf install lvm2 mdadm -y
+# Install necessary packages
+sudo dnf install lvm2 mdadm -y
 
-        # Prompt user for disk selection and display disk sizes
-        echo "Available disks:"
-        lsblk -d -n -o NAME,SIZE | awk '{print NR ". " $1 " (" $2 ")"}'
-        read -p "Enter the numbers of the disks you want to include in the RAID (separated by spaces): " disk_numbers
+# Prompt user for disk selection and display disk sizes
+echo "Available disks:"
+lsblk -d -n -o NAME,SIZE | awk '{print NR ". " $1 " (" $2 ")"}'
+read -p "Enter the numbers of the disks you want to include in the RAID (separated by spaces): " disk_numbers
 
-        # Create an array of selected disk names
-        selected_disks=()
-        for number in $disk_numbers; do
-            disk_name=$(lsblk -d -n -o NAME | awk "NR==$number")
-            selected_disks+=($disk_name)
-        done
+# Create an array of selected disk names
+selected_disks=()
+for number in $disk_numbers; do
+    disk_name=$(lsblk -d -n -o NAME | awk "NR==$number")
+    selected_disks+=($disk_name)
+done
 
-        # Create a RAID 5 array with the selected devices
-        sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=${#selected_disks[@]} ${selected_disks[@]}
+# Print the selected disks for debugging
+echo "Selected disks: ${selected_disks[@]}"
 
-        # Wait for the RAID array to be created
-        sleep 5
+# Check if the selected disks exist
+for disk in "${selected_disks[@]}"; do
+    if [ ! -b "/dev/$disk" ]; then
+        echo "Error: Disk /dev/$disk does not exist."
+        exit 1
+    fi
+done
 
-        # Create a physical volume on the RAID array
-        sudo pvcreate /dev/md0
+# Create a RAID 5 array with the selected devices
+sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=${#selected_disks[@]} ${selected_disks[@]}
 
-        # Create a volume group on the physical volume
-        sudo vgcreate vg_raid5 /dev/md0
+# Wait for the RAID array to be created
+sleep 5
 
-        # Create a logical volume named 'share' with a size of 500M
-        sudo lvcreate -L 500M -n share vg_raid5
+# Create a physical volume on the RAID array
+sudo pvcreate /dev/md0
 
-        # Format the 'share' logical volume with ext4 filesystem
-        sudo mkfs.ext4 /dev/vg_raid5/share
+# Create a volume group on the physical volume
+sudo vgcreate vg_raid5 /dev/md0
 
-        # Create a mount point for the 'share' logical volume
-        sudo mkdir -p /mnt/raid5_share
+# Create a logical volume named 'share' with a size of 500M
+sudo lvcreate -L 500M -n share vg_raid5
 
-        # Mount the 'share' logical volume
-        sudo mount /dev/vg_raid5/share /mnt/raid5_share
+# Format the 'share' logical volume with ext4 filesystem
+sudo mkfs.ext4 /dev/vg_raid5/share
 
-        # Get the UUID of the 'share' logical volume and add it to fstab for automatic mounting
-        sudo blkid /dev/vg_raid5/share | awk '{print $2 " /mnt/raid5_share ext4 defaults 0 0"}' | sudo tee -a /etc/fstab
+# Create a mount point for the 'share' logical volume
+sudo mkdir -p /mnt/raid5_share
 
-        # Create a logical volume named 'web' with a size of 500M
-        sudo lvcreate -L 500M -n web vg_raid5
+# Mount the 'share' logical volume
+sudo mount /dev/vg_raid5/share /mnt/raid5_share
 
-        # Format the 'web' logical volume with ext4 filesystem
-        sudo mkfs.ext4 /dev/vg_raid5/web
+# Get the UUID of the 'share' logical volume and add it to fstab for automatic mounting
+sudo blkid /dev/vg_raid5/share | awk '{print $2 " /mnt/raid5_share ext4 defaults 0 0"}' | sudo tee -a /etc/fstab
 
-        # Create a mount point for the 'web' logical volume
-        sudo mkdir -p /mnt/raid5_web
+# Create a logical volume named 'web' with a size of 500M
+sudo lvcreate -L 500M -n web vg_raid5
 
-        # Mount the 'web' logical volume
-        sudo mount /dev/vg_raid5/web /mnt/raid5_web
+# Format the 'web' logical volume with ext4 filesystem
+sudo mkfs.ext4 /dev/vg_raid5/web
 
-        # Get the UUID of the 'web' logical volume and add it to fstab for automatic mounting
-        sudo blkid /dev/vg_raid5/web | awk '{print $2 " /mnt/raid5_web ext4 defaults 0 0"}' | sudo tee -a /etc/fstab
+# Create a mount point for the 'web' logical volume
+sudo mkdir -p /mnt/raid5_web
 
-        systemctl daemon-reload
+# Mount the 'web' logical volume
+sudo mount /dev/vg_raid5/web /mnt/raid5_web
 
-        # Verify mounts
-        df -h
+# Get the UUID of the 'web' logical volume and add it to fstab for automatic mounting
+sudo blkid /dev/vg_raid5/web | awk '{print $2 " /mnt/raid5_web ext4 defaults 0 0"}' | sudo tee -a /etc/fstab
 
-        echo "RAID created successfully"
-        echo "Press any key to continue..."
-        read -n 1 -s key
-        clear
+systemctl daemon-reload
+
+# Verify mounts
+df -h
+
+echo "RAID created successfully"
+echo "Press any key to continue..."
+read -n 1 -s key
+clear
         ;;
         2) echo "Displaying current RAID..."
            # Add your code to display current RAID configuration here
