@@ -177,7 +177,7 @@ nfs(){
     clear
     echo "Starting unauthshare"
     while true; do
-        display_menu
+        display_unauth_share_menu
         read -p "Enter your choice: " choice
         case $choice in
             0) nfs ;;
