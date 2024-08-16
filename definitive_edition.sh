@@ -121,6 +121,20 @@ unauthshare(){
     chown -R nobody:nobody /mnt/raid5_share
     chmod -R 0777 /mnt/raid5_share
     
+    cat <<EOL > /etc/samba/smb.unauth.conf
+[unauth_share]
+   path = /mnt/raid5_share/
+   browsable = yes
+   writable = yes
+   guest ok = yes
+   guest only = yes
+   force user = nobody
+   force group = nobody
+   create mask = 0777
+   directory mask = 0777
+   read only = no
+EOL
+
     cp scripts/3_unauth_share.conf /etc/samba/smb.unauth.conf
     
     PRIMARY_CONF="/etc/samba/smb.conf"
