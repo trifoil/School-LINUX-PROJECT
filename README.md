@@ -22,9 +22,8 @@ sudo nano /etc/resolv.conf
 ```
 rm -rf git School-LINUX-PROJECT
 git clone https://github.com/trifoil/School-LINUX-PROJECT.git
-chmod +x -R School-LINUX-PROJECT
 cd School-LINUX-PROJECT
-sudo sh install.sh
+sudo sh definitive_edition.sh
 curl http://main.test.toto
 cd ..
 ```

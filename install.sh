@@ -12,8 +12,6 @@ firewall-cmd --permanent --zone=public --add-service=cockpit
 firewall-cmd --reload
 dnf -y install nfs-utils samba bind chrony fail2ban vsftpd rsync clamav clamd clamav-update bind-utils httpd php php-mysqlnd mariadb-server phpmyadmin mod_ssl
 
-chmod +x -R scripts
-
 clear
 
 # Function to display the menu
@@ -33,59 +31,78 @@ display_menu() {
     echo "| 7. Security Settings                                                 |"
     echo "| 8. Backup                                                            |"
     echo "| 9. Consult Logs Dashboard                                            |"
-    echo "| x. Testing                                                           |"
     echo "|----------------------------------------------------------------------|"
     echo "| q. Quit                                                              |"
     echo "|----------------------------------------------------------------------|"
     echo ""
 }
 
-set_hostname(){
-    sh scripts/0_hostname.sh
+display_hostname_menu() {
+    echo ""
+    echo "|----------------------------------------------------------------------|"
+    echo -e "|                 ${BLUE}Hostname Configuration Menu ${NC}                     |"
+    echo "|----------------------------------------------------------------------|"
+    echo "| 1. Set hostname                                                      |"
+    echo "| 2. Display current hostname                                          |"
+    echo "|----------------------------------------------------------------------|"
+    echo ""
+}
+
+set_hostname() {
+    clear
+    display_hostname_menu
+    read -p "Enter your choice: " hostname_choice
+    case $hostname_choice in
+        1) read -p "Enter the new hostname: " new_hostname
+           hostnamectl set-hostname $new_hostname
+           echo "Hostname set to $new_hostname"
+           ;;
+        2) current_hostname=$(hostnamectl --static)
+           echo "Current hostname: $current_hostname"
+           ;;
+        *) echo "Invalid choice. Please enter a valid option."
+           ;;
+    esac
 }
 
 raid(){
-    sh scripts/1_raid.sh
+
 }
 
 ssh(){
-    sh scripts/2_ssh.sh
+
 }
 
 unauthshare(){
-    sh scripts/3_unauth_share.sh
+
 }
 
 webservices(){
-    sh scripts/4_web_services.sh
+
 }
 
 usersmanagement(){
-    sh scripts/5_user_management.sh
+
 }
 
 ntp(){
-    sh scripts/6_ntp_server.sh
+
 }
 
 security(){
-    sh scripts/7_security.sh
+
 }
 
 backup(){
-    sh scripts/8_backup.sh
+
 }
 
 logs(){
-    sh scripts/9_logs.sh
-}
 
-testing(){
-    sh test.sh
 }
 
 # Main function
-main() {
+
     while true; do
         clear
         display_menu

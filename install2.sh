@@ -12,6 +12,8 @@ firewall-cmd --permanent --zone=public --add-service=cockpit
 firewall-cmd --reload
 dnf -y install nfs-utils samba bind chrony fail2ban vsftpd rsync clamav clamd clamav-update bind-utils httpd php php-mysqlnd mariadb-server phpmyadmin mod_ssl
 
+chmod +x -R scripts
+
 clear
 
 # Function to display the menu
@@ -31,56 +33,59 @@ display_menu() {
     echo "| 7. Security Settings                                                 |"
     echo "| 8. Backup                                                            |"
     echo "| 9. Consult Logs Dashboard                                            |"
+    echo "| x. Testing                                                           |"
     echo "|----------------------------------------------------------------------|"
     echo "| q. Quit                                                              |"
     echo "|----------------------------------------------------------------------|"
     echo ""
 }
 
-
-
 set_hostname(){
-
+    sh scripts/0_hostname.sh
 }
 
 raid(){
-
+    sh scripts/1_raid.sh
 }
 
 ssh(){
-
+    sh scripts/2_ssh.sh
 }
 
 unauthshare(){
-
+    sh scripts/3_unauth_share.sh
 }
 
 webservices(){
-
+    sh scripts/4_web_services.sh
 }
 
 usersmanagement(){
-
+    sh scripts/5_user_management.sh
 }
 
 ntp(){
-
+    sh scripts/6_ntp_server.sh
 }
 
 security(){
-
+    sh scripts/7_security.sh
 }
 
 backup(){
-
+    sh scripts/8_backup.sh
 }
 
 logs(){
+    sh scripts/9_logs.sh
+}
 
+testing(){
+    sh test.sh
 }
 
 # Main function
-
+main() {
     while true; do
         clear
         display_menu
@@ -88,17 +93,6 @@ logs(){
         case $choice in
             0) set_hostname ;;
             1) raid ;;
-            2) ssh ;;
-            3) unauthshare ;;
-            4) webservices ;;
-            5) usersmanagement ;;
-            6) ntp ;;
-            7) security ;;
-            8) backup ;;
-            9) logs ;;
-            x) testing ;;
-            q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
-            *) clear && echo "Invalid choice. Please enter a valid option." ;;
             2) ssh ;;
             3) unauthshare ;;
             4) webservices ;;
