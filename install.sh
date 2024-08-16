@@ -110,6 +110,9 @@ raid(){
         # Create a RAID 5 array with the selected devices
         sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=${#selected_disks[@]} ${selected_disks[@]}
 
+        # Wait for the RAID array to be created
+        sleep 5
+
         # Create a physical volume on the RAID array
         sudo pvcreate /dev/md0
 
@@ -151,11 +154,11 @@ raid(){
         # Verify mounts
         df -h
 
-           echo "RAID created successfully"
-           echo "Press any key to continue..."
-           read -n 1 -s key
-           clear
-           ;;
+        echo "RAID created successfully"
+        echo "Press any key to continue..."
+        read -n 1 -s key
+        clear
+        ;;
         2) echo "Displaying current RAID..."
            # Add your code to display current RAID configuration here
            echo "Press any key to continue..."
