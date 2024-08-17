@@ -877,7 +877,7 @@ security(){
     sed -i 's/^TCPSocket /#TCPSocket /' /etc/clamd.d/scan.conf
     # Restart ClamAV service to apply changes
     systemctl restart clamd@scan
-
+    
     echo "Done..."
     echo "Press any key to continue..."
     read -n 1 -s key
