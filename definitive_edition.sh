@@ -27,7 +27,7 @@ display_menu() {
     echo "| 3. NFS/SAMBA Shared Directory (no auth)                              |"
     echo "| 4. Web services management                                           |"
     echo "| 5. NTP Time Server                                                   |"
-    echo "| 6. Security Settings                                                 |"
+    echo "| 6. Install clamav                                                    |"
     echo "| 7. Backup                                                            |"
     echo "| 8. Consult Logs Dashboard                                            |"
     echo "|----------------------------------------------------------------------|"
@@ -813,7 +813,31 @@ timezone_display() {
 
 security(){
     clear
-    echo "Starting security"
+
+    dnf update
+    dnf install clamav -y
+
+    freshclam
+
+    crontab -e
+    echo "0 2 * * * clamscan -r /" | tee -a /etc/crontab
+
+    systemctl enable clamav-freshclam
+    systemctl enable clamav-daemon
+
+    systemctl start clamav-freshclam
+    systemctl start clamav-daemon
+
+
+    systemctl status clamav-freshclam
+    systemctl status clamav-daemon
+
+
+    echo "Done..."
+    echo "Press any key to continue..."
+    read -n 1 -s key
+    clear
+    
 }
 
 backup(){

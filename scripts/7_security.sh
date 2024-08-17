@@ -1,29 +1,29 @@
 #!/bin/bash
 
 # Install ClamAV
-sudo dnf update
-sudo dnf install clamav -y
+ dnf update
+ dnf install clamav -y
 
 # Update ClamAV database
-sudo freshclam
+ freshclam
 
 # Schedule regular scans
 # Edit the crontab file
-sudo crontab -e
+ crontab -e
 # Add the following line to run a daily scan at 2 AM
-echo "0 2 * * * clamscan -r /" | sudo tee -a /etc/crontab
+echo "0 2 * * * clamscan -r /" | tee -a /etc/crontab
 
 # Enable automatic scanning on file access
-sudo systemctl enable clamav-freshclam
-sudo systemctl enable clamav-daemon
+ systemctl enable clamav-freshclam
+ systemctl enable clamav-daemon
 
 # Start ClamAV service
-sudo systemctl start clamav-freshclam
-sudo systemctl start clamav-daemon
+ systemctl start clamav-freshclam
+ systemctl start clamav-daemon
 
 # Verify ClamAV status
-sudo systemctl status clamav-freshclam
-sudo systemctl status clamav-daemon
+ systemctl status clamav-freshclam
+ systemctl status clamav-daemon
 
 
 echo "Done..."
