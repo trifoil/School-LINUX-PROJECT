@@ -94,8 +94,8 @@ Les consignes sont les suivantes :
 L'ensemble sera scripté pour coller à l'ensemble des cas d'utilisation. Voici donc la liste prévue de ces scripts (pour installer/désinstaller):
 \begin{itemize}
 \item Menu de sélection											\colorbox{green}{\textcolor{black}{OK}}
-\item Configuration Raid
-\item Configuration SSH 								
+\item Configuration Raid \colorbox{red}{\textcolor{black}{OK}}	
+\item Configuration SSH \colorbox{red}{\textcolor{black}{OK}}						
 \item Configuration partage public 
 \colorbox{green}{\textcolor{black}{OK}}							
 \item Configuration Web 
@@ -105,14 +105,16 @@ L'ensemble sera scripté pour coller à l'ensemble des cas d'utilisation. Voici 
 \item SSL \colorbox{green}{\textcolor{black}{OK}}							
 \item DB \colorbox{green}{\textcolor{black}{OK}}							
 \item PHP \colorbox{green}{\textcolor{black}{OK}}							
-\item PHGPMyAdmin \colorbox{green}{\textcolor{black}{OK}}			
+\item PHGPMyAdmin \colorbox{green}{\textcolor{black}{OK}}		
+\item Mail 	\colorbox{red}{\textcolor{black}{OK}}	
 \end{itemize}
 \item Time server \colorbox{green}{\textcolor{black}{OK}}
-\item Sécurisation
-\item Backup
-\item Updates
-\item Partitionnement
+\item Sécurisation \colorbox{red}{\textcolor{black}{OK}}	
+\item Backup \colorbox{red}{\textcolor{black}{OK}}	
+\item Logs \colorbox{red}{\textcolor{black}{OK}}	
 		\end{itemize}
+		
+		
 		Il est donc indispensable de se former au BASH, afin de savoir faire un bon TUI, ainsi que des commandes conditionnelles, selon les features qui sont/ne sont pas déjà installées.
 		
 		Le service SSH est indépendant des autres services. Le DNS, time server également.
