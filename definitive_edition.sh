@@ -26,11 +26,10 @@ display_menu() {
     echo "| 2. SSH Connection                                                    |"
     echo "| 3. NFS/SAMBA Shared Directory (no auth)                              |"
     echo "| 4. Web services management                                           |"
-    echo "| 5. Users Management Menu                                             |"
-    echo "| 6. NTP Time Server                                                   |"
-    echo "| 7. Security Settings                                                 |"
-    echo "| 8. Backup                                                            |"
-    echo "| 9. Consult Logs Dashboard                                            |"
+    echo "| 5. NTP Time Server                                                   |"
+    echo "| 6. Security Settings                                                 |"
+    echo "| 7. Backup                                                            |"
+    echo "| 8. Consult Logs Dashboard                                            |"
     echo "|----------------------------------------------------------------------|"
     echo "| q. Quit                                                              |"
     echo "|----------------------------------------------------------------------|"
@@ -694,10 +693,6 @@ done
     echo "Starting webservices"
 }
 
-usersmanagement(){
-    clear
-    echo "Starting usersmanagement"
-}
 
 ntp(){
     clear
@@ -717,6 +712,7 @@ ntp(){
     sed -i "s/pool 2.almalinux.pool.ntp.org iburst/$ntp_pool/g" /etc/chrony.conf
     systemctl restart chronyd
     echo "Chrony restarted"
+
     echo "Press any key to continue..."
     read -n 1 -s key
 }
@@ -803,7 +799,7 @@ timezone_display() {
             1) setup_ntp ;;
             2) timezone_choice ;;
             3) timezone_display ;;
-            q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
+            q|Q) clear && echo "Exiting the web server configuration wizard." && break ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac
 }
@@ -835,11 +831,10 @@ logs(){
             2) ssh ;;
             3) unauthshare ;;
             4) webservices ;;
-            5) usersmanagement ;;
-            6) ntp ;;
-            7) security ;;
-            8) backup ;;
-            9) logs ;;
+            5) ntp ;;
+            6) security ;;
+            7) backup ;;
+            8) logs ;;
             x) testing ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
