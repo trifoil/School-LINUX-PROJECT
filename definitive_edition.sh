@@ -612,37 +612,37 @@ add_user(){
 </VirtualHost>
 EOL
 
-    # Set up the virtual host for the user's mail subdomain (HTTP with redirect to HTTPS)
-    cat <<EOL > /etc/httpd/conf.d/mail-$USERNAME.conf
-<VirtualHost *:80>
-    ServerName mail.$USERNAME.$DOMAIN_NAME
-    DocumentRoot /usr/share/roundcubemail
-    <Directory /usr/share/roundcubemail>
-        AllowOverride All
-        Require all granted
-    </Directory>
-    DirectoryIndex index.php
-    ErrorLog /var/log/httpd/mail_${USERNAME}_error.log
-    CustomLog /var/log/httpd/mail_${USERNAME}_access.log combined
+#     # Set up the virtual host for the user's mail subdomain (HTTP with redirect to HTTPS)
+#     cat <<EOL > /etc/httpd/conf.d/mail-$USERNAME.conf
+# <VirtualHost *:80>
+#     ServerName mail.$USERNAME.$DOMAIN_NAME
+#     DocumentRoot /usr/share/roundcubemail
+#     <Directory /usr/share/roundcubemail>
+#         AllowOverride All
+#         Require all granted
+#     </Directory>
+#     DirectoryIndex index.php
+#     ErrorLog /var/log/httpd/mail_${USERNAME}_error.log
+#     CustomLog /var/log/httpd/mail_${USERNAME}_access.log combined
 
-    # Redirect all HTTP traffic to HTTPS
-    Redirect "/" "https://mail.$USERNAME.$DOMAIN_NAME/"
-</VirtualHost>
+#     # Redirect all HTTP traffic to HTTPS
+#     Redirect "/" "https://mail.$USERNAME.$DOMAIN_NAME/"
+# </VirtualHost>
 
-<VirtualHost *:443>
-    ServerName mail.$USERNAME.$DOMAIN_NAME
-    DocumentRoot /usr/share/roundcubemail
-    <Directory /usr/share/roundcubemail>
-        AllowOverride All
-        Require all granted
-    </Directory>
-    DirectoryIndex index.php
-    SSLEngine on
-    SSLCertificateFile /etc/httpd/ssl/$DOMAIN_NAME.crt
-    SSLCertificateKeyFile /etc/httpd/ssl/$DOMAIN_NAME.key
-    ErrorLog /var/log/httpd/mail_${USERNAME}_ssl_error.log
-    CustomLog /var/log/httpd/mail_${USERNAME}_ssl_access.log combined
-</VirtualHost>
+# <VirtualHost *:443>
+#     ServerName mail.$USERNAME.$DOMAIN_NAME
+#     DocumentRoot /usr/share/roundcubemail
+#     <Directory /usr/share/roundcubemail>
+#         AllowOverride All
+#         Require all granted
+#     </Directory>
+#     DirectoryIndex index.php
+#     SSLEngine on
+#     SSLCertificateFile /etc/httpd/ssl/$DOMAIN_NAME.crt
+#     SSLCertificateKeyFile /etc/httpd/ssl/$DOMAIN_NAME.key
+#     ErrorLog /var/log/httpd/mail_${USERNAME}_ssl_error.log
+#     CustomLog /var/log/httpd/mail_${USERNAME}_ssl_access.log combined
+# </VirtualHost>
 EOL
 
     # Set up Maildir for the user
