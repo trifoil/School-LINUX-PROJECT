@@ -711,11 +711,12 @@ ntp(){
     dnf install chrony -y
     systemctl enable --now chronyd
     timedatectl set-timezone Europe/Brussels
+    echo "Time zone set to Europe/Brussels"
     timedatectl set-ntp yes
     sed -i "s|#allow 192.168.0.0/16|allow $ip_server|g" /etc/chrony.conf
     sed -i "s/pool 2.almalinux.pool.ntp.org iburst/$ntp_pool/g" /etc/chrony.conf
     systemctl restart chronyd
-    
+    echo "Chrony restarted"
     echo "Press any key to continue..."
     read -n 1 -s key
 }
@@ -795,7 +796,6 @@ timezone_display() {
 }
 
 
-     while true; do
         clear
         display_ntp_menu
         read -p "Enter your choice: " choice
@@ -806,8 +806,6 @@ timezone_display() {
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac
-        ##clear
-    done
 }
 
 security(){
