@@ -814,7 +814,7 @@ timezone_display() {
 security(){
     clear
 
-    dnf update
+    dnf update -y
     dnf install clamav -y
 
     freshclam
