@@ -542,8 +542,18 @@ EOL
     mysql -u root -prootpassword -e "GRANT ALL PRIVILEGES ON roundcubemail.* TO 'roundcube'@'localhost' IDENTIFIED BY 'roundcube_pass';"
     mysql -u root -prootpassword roundcubemail < /usr/share/doc/roundcubemail*/SQL/mysql.initial.sql
 
-    # Configure Roundcube database connection
-    sed -i "s|^\(\$config\['db_dsnw'\] = \).*|\1'mysql://roundcube:roundcube_pass@localhost/roundcubemail';|" /etc/roundcubemail/config.inc.php
+    # Create and configure Roundcube config.inc.php
+    cat <<EOL > /etc/roundcubemail/config.inc.php
+<?php
+\$config['db_dsnw'] = 'mysql://roundcube:roundcube_pass@localhost/roundcubemail';
+\$config['default_host'] = 'localhost';
+\$config['smtp_server'] = 'localhost';
+\$config['smtp_port'] = 25;
+\$config['support_url'] = '';
+\$config['des_key'] = 'rcmail-!24ByteDESkey*Str';
+\$config['plugins'] = array('archive', 'zipdownload');
+\$config['skin'] = 'larry';
+EOL
 
     systemctl restart httpd
 
