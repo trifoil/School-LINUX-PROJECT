@@ -856,33 +856,25 @@ security(){
 
     clear
     # Install ClamAV
-    dnf update
+    dnf update -y
     dnf install clamav -y
-
     # Update ClamAV database
     freshclam
-
     # Schedule regular scans
     # Edit the crontab file and add the daily scan command
     echo "0 2 * * * clamscan -r /" | sudo tee -a /etc/crontab
-
     # Enable automatic scanning on file access
     systemctl enable clamav-freshclam
     systemctl enable clamd@scan
-
     # Start ClamAV service
     systemctl start clamav-freshclam
     systemctl start clamd@scan
-
     # Verify ClamAV status
     systemctl status clamav-freshclam
     systemctl status clamd@scan
-
     # Configure ClamAV for local socket scanning
     sed -i 's/^#LocalSocket /LocalSocket /' /etc/clamd.d/scan.conf
     sed -i 's/^TCPSocket /#TCPSocket /' /etc/clamd.d/scan.conf
-
-
     # Restart ClamAV service to apply changes
     systemctl restart clamd@scan
 
