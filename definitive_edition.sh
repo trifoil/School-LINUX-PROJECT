@@ -826,7 +826,7 @@ echo "0 2 * * * clamscan -r /" | sudo tee -a /etc/crontab
 
 # Enable automatic scanning on file access
 systemctl enable clamav-freshclam
-systemctl enable clamav-daemon
+systemctl enable clamd@scan
 
 # Start ClamAV service
 systemctl start clamav-freshclam
