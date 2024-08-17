@@ -2,9 +2,9 @@
 
 clear
 
-RED='\033[0;31m' #Red
-BLUE='\e[38;5;33m' #Red
-NC='\033[0m' # No Color
+RED='\033[0;31m' 
+BLUE='\e[38;5;33m' 
+NC='\033[0m' 
 
 updatedb
 systemctl enable --now cockpit.socket
@@ -14,7 +14,6 @@ dnf -y install nfs-utils samba bind chrony fail2ban vsftpd rsync clamav clamd cl
 
 clear
 
-# Function to display the menu
 display_menu() {
     echo ""
     echo "|----------------------------------------------------------------------|"
@@ -614,7 +613,6 @@ add_user(){
 EOL
 
     systemctl restart smb
-
 
     # Create the user's database
     mysql -u root -prootpassword -e "CREATE DATABASE ${USERNAME}_db;"
