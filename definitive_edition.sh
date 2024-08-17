@@ -800,7 +800,7 @@ timezone_display() {
         display_ntp_menu
         read -p "Enter your choice: " choice
         case $choice in
-            1) setup ;;
+            1) setup_ntp ;;
             2) timezone_choice ;;
             3) timezone_display ;;
             q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
