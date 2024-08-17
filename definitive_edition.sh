@@ -44,6 +44,8 @@ display_hostname_menu() {
     echo "| 1. Set hostname                                                      |"
     echo "| 2. Display current hostname                                          |"
     echo "|----------------------------------------------------------------------|"
+    echo "| q. Quit                                                              |"
+    echo "|----------------------------------------------------------------------|"
     echo ""
 }
 
@@ -54,6 +56,8 @@ display_raid_menu() {
     echo "|----------------------------------------------------------------------|"
     echo "| 1. Create RAID                                                       |"
     echo "| 2. Display current RAID                                              |"
+    echo "|----------------------------------------------------------------------|"
+    echo "| q. Quit                                                              |"
     echo "|----------------------------------------------------------------------|"
     echo ""
 }
@@ -103,6 +107,8 @@ display_ntp_menu() {
 }
 
 set_hostname() {
+while true; do
+
     clear
     display_hostname_menu
     read -p "Enter your choice: " hostname_choice
@@ -120,9 +126,10 @@ set_hostname() {
                read -n 1 -s key
                clear
            ;;
-        *) echo "Invalid choice. Please enter a valid option."
-           ;;
+        q|Q) clear && echo "Exiting hostname configuration menu" && break ;;
+        *) clear && echo "Invalid choice. Please enter a valid option." ;;
     esac
+done
 }
 
 raid(){
