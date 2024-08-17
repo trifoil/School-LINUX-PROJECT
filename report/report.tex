@@ -24,7 +24,7 @@
 	
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.5\textwidth]{Gold\_AlmaLinux.jpg}
+		\includegraphics[width=0.5\textwidth]{fedora.png}
 		\label{fig:logoheh}
 	\end{figure}
 	
@@ -46,17 +46,20 @@ Les objectifs globaux sont donc l'application et la compréhension profonde des 
 Nous avons le choix d'utiliser n'importe quelle distributon RedHat-like, par exemple Fedora, ou bien Alma, sur laquelle nous avons travaillé en cours.
 Le choix se porte sur Fedora, qui a une plus grosse communauté (dont je fais partie pour la partie desktop) et a ma préférence (utiliser alma ne changerait bien sûr quasiment rien, les deux distributions étant très similaires).
 
-Dans la deuxième itération de ce projet linux, la barre est automatiquement mise plus haut.
 	
-Les consignes professeur sont toujours les mêmes, et sont reprises dans le sous-point suivant. Cependant, je souhaite faire tourner un serveur php pour mon homelab (et ainsi faire d'une pierre deux coups). L'option est donc présente en supplément.
+Les consignes professeur sont reprises dans le sous-point suivant.
+
 	
 L'OS de test est une machine virtuelle, hébergée sur VirtualBox. 
 	
-	Le but est aussi de pouvoir gérer en ssh le serveur avec plein d'outils utiles, et de pouvoir installer/désinstaller les services à souhait, diminuant ainsi la surface d'attaque.
+Une machine Windows et une autre machine linux sont également installées comme clients.
+Le but est aussi de pouvoir gérer en ssh le serveur avec plein d'outils utiles, et de pouvoir installer/désinstaller les services à souhait, diminuant ainsi la surface d'attaque.
 	
-	Nous devons donc gérer des services de partage de fichiers, serveur DNS, serveur Web ainsi que serveur temps.
+Il faut donc gérer des services de partage de fichiers, serveur DNS, serveur Web ainsi que serveur temps.
 	
-	La dernière étape sera de sécuriser le serveur correctement, notamment en utilisant SELinux, et en définissant les polices d'utilisation correctes.
+La dernière étape sera de sécuriser le serveur correctement, notamment en utilisant SELinux, et en définissant les polices d'utilisation correctes.
+
+La sécurité implique également les sauvegardes.
 	
 \begin{center}linux meme (19 juillet 2024) :
 \end{center}
@@ -90,18 +93,30 @@ Les consignes sont les suivantes :
 \subsection{Roadmap}
 L'ensemble sera scripté pour coller à l'ensemble des cas d'utilisation. Voici donc la liste prévue de ces scripts (pour installer/désinstaller):
 \begin{itemize}
-\item Menu de sélection
-\item SSH config wizard
-			\item File sharing install wizard
-			\item Web server install wizard
-			\item FTP server install wizard
-			\item MySQL server 
-			\item DNS server (+ cache + création de zone + serveur cache)
-			\item Time server
-			\item Sécurisation
-			\item Backup
-			\item Updates
-			\item Partitionnement
+\item Menu de sélection											\colorbox{green}{\textcolor{black}{OK}}
+\item Configuration Raid
+\item Configuration SSH 								
+\item Configuration partage public 
+\colorbox{green}{\textcolor{black}{OK}}							
+\item Configuration Web 
+\begin{itemize}
+\item Menu \colorbox{green}{\textcolor{black}{OK}}							
+\item DNS \colorbox{green}{\textcolor{black}{OK}}							
+\item SSL \colorbox{green}{\textcolor{black}{OK}}							
+\item DB \colorbox{green}{\textcolor{black}{OK}}							
+\item PHP \colorbox{green}{\textcolor{black}{OK}}							
+\item PHGPMyAdmin \colorbox{green}{\textcolor{black}{OK}}							
+
+\end{itemize}
+
+\item FTP server install wizard
+\item MySQL server 
+\item DNS server (+ cache + création de zone + serveur cache)
+\item Time server
+\item Sécurisation
+\item Backup
+\item Updates
+\item Partitionnement
 		\end{itemize}
 		Il est donc indispensable de se former au BASH, afin de savoir faire un bon TUI, ainsi que des commandes conditionnelles, selon les features qui sont/ne sont pas déjà installées.
 		

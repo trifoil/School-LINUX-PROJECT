@@ -7,7 +7,7 @@ NC='\033[0m' # No Color
 
 
 
-display_menu() {
+display_ntp_menu() {
     echo "|-------------------------------------------|"
     echo -e "|            ${GREEN}NTP server wizard${NC}              |"
     echo "|-------------------------------------------|"
@@ -22,7 +22,7 @@ display_menu() {
     echo ""
 }
 
-setup() {
+setup_ntp() {
     clear 
 
     ip_server=$(hostname -I | sed 's/ *$//')/16
@@ -118,7 +118,7 @@ timezone_display() {
 main() {
     while true; do
         clear
-        display_menu
+        display_ntp_menu
         read -p "Enter your choice: " choice
         case $choice in
             1) setup ;;
