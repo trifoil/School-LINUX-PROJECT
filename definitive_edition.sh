@@ -850,8 +850,8 @@ logs(){
     clear
     echo "Starting logs"
 }
+}
 
-# Main function
 main() {
     while true; do
         clear
