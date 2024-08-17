@@ -836,12 +836,7 @@ security(){
     # Verify ClamAV status
     systemctl status clamav-freshclam
     systemctl status clamd@scan
-
-    # Prompt user to define server type
-    echo "Please define server type (local and/or TCP):"
-    read -p "Enter 'local' for LocalSocket or 'tcp' for TCPSocket: " server_type
-
-    # Configure ClamAV 
+    # Uncomment the "LocalSocket" line in clamd.conf
     sed -i 's/^#LocalSocket /LocalSocket /' /etc/clamd.d/scan.conf
     sed -i 's/^TCPSocket /#TCPSocket /' /etc/clamd.d/scan.conf
 
