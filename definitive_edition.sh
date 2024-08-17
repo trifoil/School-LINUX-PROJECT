@@ -523,7 +523,9 @@ EOL
 }
 
 basic_mail(){
-
+    echo "meow"
+    echo "Press any key to exit..."
+    read -n 1 -s key
 }
 
 basic_setup(){
