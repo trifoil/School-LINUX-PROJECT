@@ -508,61 +508,97 @@ EOL
 }
 
 basic_mail(){
+basic_mail(){
     DOMAIN_NAME=$1
-    dnf -y install postfix dovecot roundcubemail
 
-    # Configure Postfix
-    sed -i 's/#myhostname = host.domain.tld/myhostname = mail.'"$DOMAIN_NAME"'/' /etc/postfix/main.cf
-    sed -i 's/#mydomain = domain.tld/mydomain = '"$DOMAIN_NAME"'/' /etc/postfix/main.cf
-    sed -i 's/#myorigin = $mydomain/myorigin = $mydomain/' /etc/postfix/main.cf
-    sed -i 's/inet_interfaces = localhost/inet_interfaces = all/' /etc/postfix/main.cf
-    sed -i 's/#home_mailbox = Maildir\//home_mailbox = Maildir\//' /etc/postfix/main.cf
+    echo "Installing Postfix and Dovecot..."
+    apt-get update
+    apt-get install -y postfix dovecot-core dovecot-imapd dovecot-pop3d
 
-    systemctl start postfix
-    systemctl enable postfix
+    echo "Configuring Postfix..."
+    postconf -e "myhostname = mail.$DOMAIN_NAME"
+    postconf -e "mydomain = $DOMAIN_NAME"
+    postconf -e "myorigin = /etc/mailname"
+    postconf -e "inet_interfaces = all"
+    postconf -e "mydestination = \$myhostname, localhost.\$mydomain, localhost"
+    postconf -e "relay_domains ="
+    postconf -e "home_mailbox = Maildir/"
+    postconf -e "smtpd_banner = \$myhostname ESMTP \$mail_name (Ubuntu)"
+    postconf -e "biff = no"
+    postconf -e "append_dot_mydomain = no"
+    postconf -e "readme_directory = no"
+    postconf -e "smtpd_tls_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem"
+    postconf -e "smtpd_tls_key_file=/etc/ssl/private/ssl-cert-snakeoil.key"
+    postconf -e "smtpd_use_tls=yes"
+    postconf -e "smtpd_tls_session_cache_database = btree:\${data_directory}/smtpd_scache"
+    postconf -e "smtp_tls_session_cache_database = btree:\${data_directory}/smtp_scache"
+    postconf -e "smtpd_relay_restrictions = permit_mynetworks permit_sasl_authenticated defer_unauth_destination"
+    postconf -e "myhostname = mail.$DOMAIN_NAME"
+    postconf -e "alias_maps = hash:/etc/aliases"
+    postconf -e "alias_database = hash:/etc/aliases"
+    postconf -e "myorigin = /etc/mailname"
+    postconf -e "mydestination = \$myhostname, $DOMAIN_NAME, localhost.$DOMAIN_NAME, localhost"
+    postconf -e "relayhost ="
+    postconf -e "mynetworks = 127.0.0.0/8"
+    postconf -e "mailbox_size_limit = 0"
+    postconf -e "recipient_delimiter = +"
+    postconf -e "inet_interfaces = all"
+    postconf -e "inet_protocols = all"
 
-    # Configure Dovecot
-    sed -i 's/#protocols = imap pop3 lmtp/protocols = imap pop3 lmtp/' /etc/dovecot/dovecot.conf
-    sed -i 's/#mail_location =/mail_location = maildir:~\/Maildir/' /etc/dovecot/conf.d/10-mail.conf
-
-    systemctl start dovecot
-    systemctl enable dovecot
-
-    # Configure Roundcube
-    cat <<EOL > /etc/httpd/conf.d/roundcube.conf
-Alias /roundcube /usr/share/roundcubemail
-<Directory /usr/share/roundcubemail>
-    Options -Indexes
-    AllowOverride None
-    Require all granted
-</Directory>
+    echo "Configuring Dovecot..."
+    cat <<EOL > /etc/dovecot/dovecot.conf
+protocols = imap pop3 lmtp
+mail_location = maildir:~/Maildir
+namespace inbox {
+  inbox = yes
+}
+auth_mechanisms = plain login
+userdb {
+  driver = passwd
+}
+passdb {
+  driver = pam
+}
+service auth {
+  unix_listener /var/spool/postfix/private/auth {
+    mode = 0660
+    user = postfix
+    group = postfix
+  }
+}
 EOL
 
-    mysql -u root -prootpassword -e "CREATE DATABASE roundcubemail;"
-    mysql -u root -prootpassword -e "GRANT ALL PRIVILEGES ON roundcubemail.* TO 'roundcube'@'localhost' IDENTIFIED BY 'roundcube_pass';"
-    mysql -u root -prootpassword roundcubemail < /usr/share/doc/roundcubemail*/SQL/mysql.initial.sql
+    echo "Restarting Postfix and Dovecot..."
+    systemctl restart postfix
+    systemctl restart dovecot
 
-    # Create and configure Roundcube config.inc.php
-    cat <<EOL > /etc/roundcubemail/config.inc.php
+    echo "Verifying DNS configuration for mail..."
+    dig MX $DOMAIN_NAME
+
+    echo "Installing Roundcube..."
+    apt-get install -y roundcube roundcube-core roundcube-mysql roundcube-plugins
+
+    echo "Configuring Roundcube..."
+    cat <<EOL > /etc/roundcube/config.inc.php
 <?php
-\$config['db_dsnw'] = 'mysql://roundcube:roundcube_pass@localhost/roundcubemail';
+\$config['db_dsnw'] = 'mysql://roundcube:password@localhost/roundcubemail';
 \$config['default_host'] = 'localhost';
 \$config['smtp_server'] = 'localhost';
 \$config['smtp_port'] = 25;
+\$config['smtp_user'] = '%u';
+\$config['smtp_pass'] = '%p';
 \$config['support_url'] = '';
 \$config['des_key'] = 'rcmail-!24ByteDESkey*Str';
 \$config['plugins'] = array('archive', 'zipdownload');
 \$config['skin'] = 'larry';
+?>
 EOL
 
-    systemctl restart httpd
+    echo "Restarting Apache..."
+    systemctl restart apache2
 
-    firewall-cmd --add-service=smtp --permanent
-    firewall-cmd --add-service=imap --permanent
-    firewall-cmd --add-service=pop3 --permanent
-    firewall-cmd --reload
-
-    echo "Roundcube webmail setup is complete."
+    echo "Mail server and Roundcube installation complete."
+}
 }
 
 basic_setup(){
