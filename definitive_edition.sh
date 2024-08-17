@@ -836,7 +836,8 @@ security(){
     # Verify ClamAV status
     systemctl status clamav-freshclam
     systemctl status clamd@scan
-    # Uncomment the "LocalSocket" line in clamd.conf
+
+    # Configure ClamAV for local socket scanning
     sed -i 's/^#LocalSocket /LocalSocket /' /etc/clamd.d/scan.conf
     sed -i 's/^TCPSocket /#TCPSocket /' /etc/clamd.d/scan.conf
 
