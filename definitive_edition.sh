@@ -261,7 +261,7 @@ nfs(){
         case $choice in
             0) nfs ;;
             1) smb ;;
-            q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
+            q|Q) clear && echo "Exiting the web server configuration wizard." && break ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac
     done
@@ -597,7 +597,7 @@ add_user(){
     echo
     DIR="/mnt/raid5_web/$USERNAME"
     mkdir -p "$DIR"
-    echo "Created $DIR directory ... " 
+    echo "Created $DIR directory ... "
     useradd $USERNAME
     echo "$USERNAME:$PASSWORD" | chpasswd
     smbpasswd -a $USERNAME
@@ -605,6 +605,16 @@ add_user(){
 
     chown -R $USERNAME:$USERNAME "$DIR"
     chmod -R 755 "$DIR"
+
+    cat <<EOL >> /etc/samba/smb.conf
+[$USERNAME]
+    path = $DIR
+    valid users = $USERNAME
+    read only = no
+EOL
+
+    systemctl restart smb
+
 
     # Create the user's database
     mysql -u root -prootpassword -e "CREATE DATABASE ${USERNAME}_db;"
@@ -677,14 +687,14 @@ EOL
 #     ErrorLog /var/log/httpd/mail_${USERNAME}_ssl_error.log
 #     CustomLog /var/log/httpd/mail_${USERNAME}_ssl_access.log combined
 # </VirtualHost>
-EOL
+#EOL
 
-    # Set up Maildir for the user
-    maildirmake.dovecot /home/$USERNAME/Maildir
-    chown -R $USERNAME:$USERNAME /home/$USERNAME/Maildir
+    # # Set up Maildir for the user
+    # maildirmake.dovecot /home/$USERNAME/Maildir
+    # chown -R $USERNAME:$USERNAME /home/$USERNAME/Maildir
 
-    # Add the user to the Roundcube database
-    mysql -u root -prootpassword -e "INSERT INTO roundcubemail.users (username, mail_host, created) VALUES ('$USERNAME', 'localhost', NOW());"
+    # # Add the user to the Roundcube database
+    # mysql -u root -prootpassword -e "INSERT INTO roundcubemail.users (username, mail_host, created) VALUES ('$USERNAME', 'localhost', NOW());"
 
     # Ensure proper SELinux context and restart Apache
     semanage fcontext -a -e /var/www /mnt/raid5_web
@@ -693,6 +703,9 @@ EOL
 
     echo "User $USERNAME has been created with a mail account and a database."
     echo "Mail can be accessed at https://mail.$USERNAME.$DOMAIN_NAME"
+
+    echo "Press any key to continue..."
+    read -n 1 -s key
 }
 
 

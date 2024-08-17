@@ -68,6 +68,10 @@ sudo umount /mnt/nfs
 
 ### fedora mount samba
 
+si le username est joe
+
+smb://192.168.1.102/joe/
+
 ### mail explanations
 
 **Postfix** and **Dovecot** are both software packages commonly used in email server setups. Here's a brief overview of each:
@@ -95,3 +99,4 @@ A typical email server setup might involve:
 - **Dovecot** for IMAP/POP3 (retrieving emails).
 
 This combination ensures that emails can be sent, received, and accessed by users efficiently and securely.
+
