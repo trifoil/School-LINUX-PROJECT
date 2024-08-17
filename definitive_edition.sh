@@ -39,7 +39,7 @@ display_menu() {
 display_hostname_menu() {
     echo ""
     echo "|----------------------------------------------------------------------|"
-    echo -e "|                 ${BLUE}Hostname Configuration Menu ${NC}                     |"
+    echo -e "|                    ${BLUE}Hostname Configuration Menu ${NC}                     |"
     echo "|----------------------------------------------------------------------|"
     echo "| 1. Set hostname                                                      |"
     echo "| 2. Display current hostname                                          |"
