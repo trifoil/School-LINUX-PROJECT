@@ -812,34 +812,50 @@ timezone_display() {
 }
 
 security(){
+
     clear
-# Install ClamAV
-dnf update
-dnf install clamav -y
+    # Install ClamAV
+    dnf update
+    dnf install clamav -y
 
-# Update ClamAV database
-freshclam
+    # Update ClamAV database
+    freshclam
 
-# Schedule regular scans
-# Edit the crontab file and add the daily scan command
-echo "0 2 * * * clamscan -r /" | sudo tee -a /etc/crontab
+    # Schedule regular scans
+    # Edit the crontab file and add the daily scan command
+    echo "0 2 * * * clamscan -r /" | sudo tee -a /etc/crontab
 
-# Enable automatic scanning on file access
-systemctl enable clamav-freshclam
-systemctl enable clamd@scan
+    # Enable automatic scanning on file access
+    systemctl enable clamav-freshclam
+    systemctl enable clamd@scan
 
-# Start ClamAV service
-systemctl start clamav-freshclam
-systemctl start clamd@scan
+    # Start ClamAV service
+    systemctl start clamav-freshclam
+    systemctl start clamd@scan
 
-# Verify ClamAV status
-systemctl status clamav-freshclam
-systemctl status clamd@scan
+    # Verify ClamAV status
+    systemctl status clamav-freshclam
+    systemctl status clamd@scan
 
-echo "Done..."
-echo "Press any key to continue..."
-read -n 1 -s key
-clear
+    # Prompt user to define server type
+    echo "Please define server type (local and/or TCP):"
+    read -p "Enter 'local' for LocalSocket or 'tcp' for TCPSocket: " server_type
+
+    # Configure ClamAV 
+    sed -i 's/^#LocalSocket /LocalSocket /' /etc/clamd.d/scan.conf
+    sed -i 's/^TCPSocket /#TCPSocket /' /etc/clamd.d/scan.conf
+
+
+    # Restart ClamAV service to apply changes
+    systemctl restart clamd@scan
+
+    echo "Done..."
+    echo "Press any key to continue..."
+    read -n 1 -s key
+    clear
+
+}
+
 
 backup(){
     clear
@@ -850,7 +866,7 @@ logs(){
     clear
     echo "Starting logs"
 }
-}
+
 
 main() {
     while true; do
