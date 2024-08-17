@@ -852,7 +852,7 @@ logs(){
 }
 
 # Main function
-
+main() {
     while true; do
         clear
         display_menu
