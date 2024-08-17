@@ -8,10 +8,8 @@
  freshclam
 
 # Schedule regular scans
-# Edit the crontab file
- crontab -e
-# Add the following line to run a daily scan at 2 AM
-echo "0 2 * * * clamscan -r /" | tee -a /etc/crontab
+# Edit the crontab file and add the daily scan command
+echo "0 2 * * * clamscan -r /" | sudo tee -a /etc/crontab
 
 # Enable automatic scanning on file access
  systemctl enable clamav-freshclam
