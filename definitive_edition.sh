@@ -679,7 +679,7 @@ remove_user(){
     echo "User $USERNAME and their data have been removed."
 }
 
-
+while true; do
     clear
     display_web_menu
     read -p "Enter your choice: " web_choice
@@ -687,10 +687,10 @@ remove_user(){
         0) basic_setup ;;
         1) add_user ;;
         2) remove_user ;;
-        q|Q) clear && echo "Exiting the user management menu." && exit ;;
+        q|Q) clear && echo "Exiting the user management menu." && break ;;
         *) clear && echo "Invalid choice. Please enter a valid option." ;;
     esac
-
+done
     echo "Starting webservices"
 }
 
