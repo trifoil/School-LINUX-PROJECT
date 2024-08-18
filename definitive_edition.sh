@@ -616,11 +616,11 @@ EOL
     setsebool -P httpd_can_sendmail 1
     systemctl restart httpd
 
-    # mkdir -p /etc/ssl/private
-    # openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
-    #     -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=mail.$DOMAIN_NAME" \
-    #     -keyout /etc/ssl/private/mail.$DOMAIN_NAME.key \
-    #     -out /etc/ssl/certs/mail.$DOMAIN_NAME.crt
+    mkdir -p /etc/ssl/private
+    openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
+        -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=mail.$DOMAIN_NAME" \
+        -keyout /etc/ssl/private/mail.$DOMAIN_NAME.key \
+        -out /etc/ssl/certs/mail.$DOMAIN_NAME.crt
 
 cat <<EOL > /etc/httpd/conf.d/roundcube.conf
 <VirtualHost *:80>
