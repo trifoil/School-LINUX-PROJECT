@@ -508,6 +508,7 @@ EOL
 }
 
 basic_mail(){
+    sudo dnf -y install postfix dovecot roundcubemail
     DOMAIN_NAME=$1
 
     echo "meow"
