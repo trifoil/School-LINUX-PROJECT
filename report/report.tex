@@ -94,7 +94,7 @@ L'ensemble sera scripté pour coller à l'ensemble des cas d'utilisation. Voici 
 \begin{itemize}
 \item Menu de sélection											\colorbox{green}{\textcolor{black}{OK}}
 \item Configuration Raid \colorbox{green}{\textcolor{black}{OK}}	
-\item Configuration SSH \colorbox{red}{\textcolor{black}{OK}}						
+\item Configuration SSH \colorbox{green}{\textcolor{black}{OK}}						
 \item Configuration partage public 
 \colorbox{green}{\textcolor{black}{OK}}							
 \item Configuration Web 
@@ -109,7 +109,7 @@ L'ensemble sera scripté pour coller à l'ensemble des cas d'utilisation. Voici 
 \end{itemize}
 \item Time server \colorbox{green}{\textcolor{black}{OK}}
 \item Sécurisation \colorbox{green}{\textcolor{black}{OK}}	
-\item Backup \colorbox{red}{\textcolor{black}{OK}}	
+\item Backup \colorbox{green}{\textcolor{black}{OK}}	
 \item Logs \colorbox{red}{\textcolor{black}{OK}}	
 		\end{itemize}
 		
@@ -392,6 +392,8 @@ And voilà ! (Je laisse le disque de backup en attente pour pouvoir identifier f
 
 \section{Description du logiciel}
 
+
+
 \subsection{Clonage du repo git}
 
 git clone https://github.com/trifoil/School-LINUX-PROJECT.git
@@ -401,93 +403,114 @@ git clone https://github.com/trifoil/School-LINUX-PROJECT.git
 
 Pour lancer le script, il suffit de se rendre dans le directory School-LINUX-PROJEC, et d'exécuter le script intitulé "install.sh" en sudo.
 
-\subsection{RAID}
+\subsection{Hostname}
 
-	\colorbox{yellow}{\textcolor{red}{!! A finir}}
-	
-
-Les volumes dans lesquels viennent se mettre les partages et fichiers web sont \texttt{/mnt/raid5\_share} et \texttt{/mnt/raid5\_web}.
-
-\subsection{Partage sans authentification}
-
-Le partage sans authentification, donc avec accès libre en écriture et lecture, doit être accessible depuis Linuw et Windows. NFS sera donc utilisé pour linux et Samba pour Windows. 
-
-Le script offre la possibilité de créer un dossier dans le chemin préétabli, ou de choisir le chemin. Il offre aussi la possibilité de créer séparément un partage NFS et un partage SMB. Il gère également les autorisations pour que SELinux autororise l'accès.
-
-\colorbox{yellow}{\textcolor{red}{!! Ajouter limites de poids du dossier}}
-
-Pour monter le directory en NFS :
-
-\texttt{sudo mount -t nfs 192.168.1.195:/mnt/raid5\_share/unauth\_share /mnt}
-
-Pour démonter le directory en NFS :
-
-\texttt{sudo umount /mnt}
-
-
-\subsection{Connexion par SSH}
-\newpage
-\subsection{Setup initial des services}
-
-De loin la partie la plus difficile, qui comporte plusieurs parties :
+Cette partie du script sollicite une entrée clavier de l'utilisateur en lui proposant : 
 \begin{itemize}
-\item Mise en place du DNS local
-\item Installation de la DB
-\item Installation du serveur mail
-\item Ajout d'un utilisateur
-\begin{itemize}
-\item Creation de son dossier web
-\item Creation de sa base de données
-\item Creation de sa configuration web (http et php)
-\item Creation de sa zone dans le DNS et ajout de son sous-domaine
-\item Ajout du mail
-\end{itemize}
+\item de choisir un nouveau nom d'hôte
+\item d'afficher le nom d'hôte actuel
 \end{itemize}
 
-\subsubsection{IP fixe}
+C'est un script relativement simple et totalement indépendant du reste
 
-Au niveau de l'IP, comme c'est une démonstration, pas besoin de mettre une IP fixe, car l'addresse ne changera probablement pas vite.
+\subsection{Configuration RAID}
 
-Dans le cas ou l'on veut avoir une IP fixe, il faut modifier dans le routeur afin d'associer une IP à l'addresse MAC de notre machine, puis la machine recevra automatiquement son 
+Comme ce n'était pas demandé, cette partie se limite à une petite démonstration. Elle pourrait être améliorée afin de démonter, remonter, effacer le stockage du serveur.
 
-\subsubsection{Gestion DNS interne}
+Actuellement ce script monte les trois premiers disques non-montés qui sont branchés sur la machine.
 
-On utilise le package BIND. Son fichier de configuration est \texttt{/etc/named.conf}.
+Le type de RAID utilisé est un RAID5.
 
-Le script va donc renommer le fichier de configuration original avec un timestamp comme backup, et ajouter le nouveau fichier de configuration.
+Les partitions sont montées sur \texttt{/mnt/raid5\_share } et \texttt{/mnt/raid5\_web } 
 
-Comme on n'utilise que de l'IPv4, le script rajoute la ligne \texttt{OPTIONS="-4"} à la fin du fichier \texttt{/etc/sysconfig/named}.
+\subsection{Connection SSH}
 
-Le fichier de configuration \texttt{/etc/named.conf} doit renvoyer vers deux fichiers de configuration de zones : une zone en forward et une zone en reverse.
+Cette partie installe le service sshd et le configure pour qu'il fonctionne avec une clé privée/publique.
 
-La zone en forward contient un A record afin de pouvoir associer une IP locale avec le nom de domaine.
+Puisque j'utilise Fedora Cockpit, je ne passe pas par le ssh mais le service est disponible.
 
-La zone en reverse quant à elle contient un PTR record afin d'associer le nom de domaine à l'IP choisie.
+\subsection{Partage NFS/SAMBA sans authentification}
 
-le script n°4 met à jour ces informations automatiquemeent pour autant qu'on lui fournisse la bonne adresse IP, et un nom de domaine correct. L'exemple utilisé lors des tests est test.toto.
+Un partage peut être créé dans le directory \texttt{/mnt/raid5\_share } 
+Ce partage est sans authentification.
 
-Attention ! Dans le cas de l'ajout d'un nouveau client Linux, ou dans le cas ou le serveur aurait été stoppé quand le client était encore connecté, il faut redémarrer le service NetworkManager!
+Comment l'utiliser? 
 
-Il faut également au préalable prendre soin de rajouter l'adresse du serveur DNS dans nmtui.
+Pour le partage samba, on y accède simplement par l'explorateur de fichiers, par exemple si l'adresse est 192.168.1.102, on aura: \texttt{smb://192.168.1.102}
 
-\subsubsection{Gestion du serveur web}
+Pour le partage NFS, il suffit de monter le volume sur la machine cliente : 
 
-Comme on planifie d'avoir plusieurs pages liées à des sous-domaines différents, on va travailler avec des hôtes virtuels. Ceux-ci permettent de choisir le port et le nom de sous-domaine. Le port choisi reste toujours le même.
 
-\subsubsection{Gestion de la base de données (serveur SQL)}
+\texttt{mkdir /mnt/nfs}
 
-\subsubsection{Gestion de la base de données (phpmyadmin)}
 
-\subsubsection{Gestion du mail}
+\texttt{sudo mount -t nfs 192.168.1.102:/mnt/raid5\_share /mnt/nfs}
 
-\subsection{Gestion des utilisateurs}
 
+\texttt{sudo umount /mnt/nfs}
+
+Une limite douce de 500Mo est ajoutée, ainsi qu'une limite dure de 600Mo (pour l'utilisateur nobody.
+
+\subsection{Services Web}
+
+Les services web sont une collection d'un tas de services différents listés ci-après.
+
+Deux options sont disponibles, installation initiale et ajout d'utilisateur.
+
+\subsubsection{Installation initiale}
+
+Au niveau de l'installation générale, on retrouve déjà la plupart des services.
+
+\begin{itemize}
+\item DNS
+
+Le script sauvegarde le fichier de configuration initial, puis le modifie selon les paramètres prédéfinis, le nom de domaine et adresse IP fournis par l'administrateur.
+
+
+
+Ensuite dexu zones sont créées dans le DNS :
+
+\begin{itemize}
+\item Forward 
+
+\item Reverse 
+\end{itemize}
+
+Et puis quelques autres choses sont configurées comme par exemple l'IPv4 seulement, ou encore le hostname.
+
+
+\item httpd
+
+La page web de base est une simple page qui redirige vers l'adresse de la base de données.
+
+\item ssl
+
+Un certificat auto-signé ssl est configuré lors du setup.
+
+
+
+\end{itemize}
+
+
+
+
+
+\subsubsection{Ajout d'utilisateurs}
+\begin{itemize}
+\item Dossier utilisateur web
+
+Le dossier est partagé par Samba et FTP.
+
+Pour le partage samba, on y accède simplement par l'explorateur de fichiers, par exemple si le username est joe, on aura: \texttt{smb://192.168.1.102/joe/}  
+\end{itemize}
 
 
 \subsection{Serveur temps}
-\subsection{Plan de sauvegarde}
-\subsection{Sécurité}
-\subsection{Journal de bord}
+
+\subsection{Clamav et Fail2ban}
+\subsection{Backup}
+\subsection{Logs d'installation}
+
 
 \pagebreak
 
