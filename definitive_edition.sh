@@ -1013,7 +1013,9 @@ backup(){
 
     # Append a timestamp to the log file
     echo "$(date) - Backup completed" >> /mnt/backup/backup.log
-
+       
+    echo "Press any key to continue..."
+    read -n 1 -s key
 }
 
 logs(){
