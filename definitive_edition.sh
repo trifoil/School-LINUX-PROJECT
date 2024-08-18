@@ -940,10 +940,46 @@ security(){
     # Restart ClamAV service to apply changes
     systemctl restart clamd@scan
 
-    echo "Done..."
+    echo "Clamav Done..."
     echo "Press any key to continue..."
     read -n 1 -s key
     clear
+
+    configure_fail2ban() {
+        # Install Fail2Ban
+        dnf install fail2ban -y
+
+        # Configure Fail2Ban for SSH
+        cat <<EOL > /etc/fail2ban/jail.d/sshd.local
+    [sshd]
+    enabled = true
+    port = ssh
+    filter = sshd
+    logpath = /var/log/secure
+    maxretry = 3
+    bantime = 3600
+    EOL
+
+        # Configure Fail2Ban for Fedora Cockpit
+        cat <<EOL > /etc/fail2ban/jail.d/cockpit.local
+    [cockpit]
+    enabled = true
+    port = http,https
+    filter = cockpit
+    logpath = /var/log/secure
+    maxretry = 3
+    bantime = 3600
+EOL
+
+        # Restart Fail2Ban service
+        systemctl enable --now fail2ban
+
+        echo "Fail2Ban configured for SSH and Fedora Cockpit."
+        echo "Press any key to continue..."
+        read -n 1 -s key
+    }
+
+    configure_fail2ban
 
 }
 
