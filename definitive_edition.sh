@@ -662,7 +662,7 @@ add_user(){
     read -p "Enter the server domain name (e.g., example.com) : " DOMAIN_NAME
     read -p "Enter a username: " USERNAME
     read -sp "Enter a password: " PASSWORD
-    echo
+    echo "creating directory"
     DIR="/mnt/raid5_web/$USERNAME"
     mkdir -p "$DIR"
     echo "Created $DIR directory ... "
@@ -673,6 +673,8 @@ add_user(){
 
     chown -R $USERNAME:$USERNAME "$DIR"
     chmod -R 755 "$DIR"
+    chown -R $USERNAME:$USERNAME "$MAILDIR"
+    chmod -R 700 "$MAILDIR"
 
     cat <<EOL >> /etc/samba/smb.conf
 [$USERNAME]
@@ -726,6 +728,19 @@ EOL
     semanage fcontext -a -e /var/www /mnt/raid5_web
     restorecon -Rv /mnt
     systemctl restart httpd
+
+    # Configure Postfix to handle the new user's mail
+    postmap /etc/postfix/virtual
+    postconf -e "virtual_alias_maps = hash:/etc/postfix/virtual"
+
+    # Configure Dovecot to handle the new user's mail
+    mkdir -p /home/$USERNAME/Maildir
+    chown -R $USERNAME:$USERNAME /home/$USERNAME/Maildir
+
+    echo "$USERNAME@$DOMAIN_NAME $USERNAME" >> /etc/postfix/virtual
+
+    # Restart Postfix to apply changes
+    systemctl restart postfix
 
     echo "User $USERNAME has been created with a mail account and a database."
     echo "Mail can be accessed at https://mail.$USERNAME.$DOMAIN_NAME"
