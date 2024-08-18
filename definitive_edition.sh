@@ -1015,13 +1015,8 @@ backup(){
     # Use rsync to backup the /mnt/raid5_share directory
     rsync -avz /mnt/raid5_share /mnt/backup/$TIMESTAMP/raid5_share
 
-    # Use rsync to backup each directory from raid5_web
-    for dir in /mnt/raid5_web/*; do
-        if [[ -d "$dir" ]]; then
-            dir_name=$(basename "$dir")
-            rsync -avz "$dir" "/mnt/backup/$TIMESTAMP/$dir_name"
-        fi
-    done
+    # Use rsync to backup each directory from raid5_web on /mnt/backup/$TIMESTAMP/raid5_web
+    rsync -avz /mnt/raid5_web /mnt/backup/$TIMESTAMP/raid5_web
 
 
     # Append a timestamp to the log file
