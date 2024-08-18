@@ -1008,8 +1008,21 @@ backup(){
     # Append a timestamp to the log file
     echo "$(date) - Backup started" >> /mnt/backup/backup.log
 
-    # Perform the backup operation
-    # Replace this line with your actual backup command
+    # Create a directory with the current date and time
+    TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+    mkdir /mnt/backup/$TIMESTAMP
+
+    # Use rsync to backup the /mnt/raid5_share directory
+    rsync -avz /mnt/raid5_share /mnt/backup/$TIMESTAMP/raid5_share
+
+    # Use rsync to backup each directory from raid5_web
+    for dir in /mnt/raid5_web/*; do
+        if [[ -d "$dir" ]]; then
+            dir_name=$(basename "$dir")
+            rsync -avz "$dir" "/mnt/backup/$TIMESTAMP/$dir_name"
+        fi
+    done
+
 
     # Append a timestamp to the log file
     echo "$(date) - Backup completed" >> /mnt/backup/backup.log
