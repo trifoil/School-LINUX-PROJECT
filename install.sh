@@ -722,7 +722,7 @@ EOL
     systemctl restart vsftpd
 
     echo "User $USERNAME has been created with a mail account, a Samba share, and an FTP account."
-}
+
 
     systemctl restart smb
 
