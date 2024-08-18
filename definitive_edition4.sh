@@ -509,6 +509,8 @@ EOL
 
 basic_mail(){
     sudo dnf -y install postfix dovecot roundcubemail
+    DOMAIN_NAME=$1
+
     echo "meow"
 
     configure_postfix(){
@@ -614,46 +616,6 @@ EOL
 
     # Apply SELinux and restart Apache
     setsebool -P httpd_can_sendmail 1
-    systemctl restart httpd
-
-    # mkdir -p /etc/ssl/private
-    # openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
-    #     -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=mail.$DOMAIN_NAME" \
-    #     -keyout /etc/ssl/private/mail.$DOMAIN_NAME.key \
-    #     -out /etc/ssl/certs/mail.$DOMAIN_NAME.crt
-
-cat <<EOL > /etc/httpd/conf.d/roundcube.conf
-<VirtualHost *:80>
-    ServerName mail.$DOMAIN_NAME
-    DocumentRoot /usr/share/roundcubemail
-    <Directory /usr/share/roundcubemail>
-        Options -Indexes
-        AllowOverride All
-        Require all granted
-    </Directory>
-    ErrorLog /var/log/httpd/roundcube_error.log
-    CustomLog /var/log/httpd/roundcube_access.log combined
-</VirtualHost>
-EOL
-
-    # Create a virtual host for Roundcube (HTTPS)
-    cat <<EOL > /etc/httpd/conf.d/roundcube-ssl.conf
-<VirtualHost *:443>
-    ServerName mail.$DOMAIN_NAME
-    DocumentRoot /usr/share/roundcubemail
-    SSLEngine on
-    SSLCertificateFile /etc/ssl/certs/mail.$DOMAIN_NAME.crt
-    SSLCertificateKeyFile /etc/ssl/private/mail.$DOMAIN_NAME.key
-    <Directory /usr/share/roundcubemail>
-        Options -Indexes
-        AllowOverride All
-        Require all granted
-    </Directory>
-    ErrorLog /var/log/httpd/roundcube_ssl_error.log
-    CustomLog /var/log/httpd/roundcube_ssl_access.log combined
-</VirtualHost>
-EOL
-
     systemctl restart httpd
 
     echo "Roundcube configured with the domain $DOMAIN_NAME."
