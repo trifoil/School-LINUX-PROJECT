@@ -987,7 +987,33 @@ EOL
 
 backup(){
     clear
-    echo "Starting backup"
+    lsblk
+
+    read -p "Enter the disk name to use for backup (e.g., sdb): " BACKUP_DISK
+    echo "Selected disk for backup: $BACKUP_DISK"
+    # Rest of the backup code goes here
+
+    # Create a mount point for the backup disk
+    mkdir /mnt/backup
+
+    # Mount the backup disk
+    mount /dev/$BACKUP_DISK /mnt/backup
+
+    # Format the disk in ext4
+    mkfs.ext4 /dev/$BACKUP_DISK
+
+    # Create a backup log file
+    touch /mnt/backup/backup.log
+
+    # Append a timestamp to the log file
+    echo "$(date) - Backup started" >> /mnt/backup/backup.log
+
+    # Perform the backup operation
+    # Replace this line with your actual backup command
+
+    # Append a timestamp to the log file
+    echo "$(date) - Backup completed" >> /mnt/backup/backup.log
+
 }
 
 logs(){
