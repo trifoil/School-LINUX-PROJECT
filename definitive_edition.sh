@@ -1,5 +1,3 @@
-
-
 #!/bin/bash
 
 clear
@@ -136,36 +134,21 @@ done
 raid(){
     clear
     echo "Creating RAID..."
-    # Install necessary packages
     sudo dnf install lvm2 mdadm -y
-    # Create a RAID 5 array with 3 devices
     sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=3 /dev/sdb /dev/sdc /dev/sdd
-    # Create a physical volume on the RAID array
     sudo pvcreate /dev/md0
-    # Create a volume group on the physical volume
     sudo vgcreate vg_raid5 /dev/md0
-    # Create a logical volume named 'share' with a size of 500M
     sudo lvcreate -L 500M -n share vg_raid5
-    # Format the 'share' logical volume with ext4 filesystem
     sudo mkfs.ext4 /dev/vg_raid5/share
-    # Create a mount point for the 'share' logical volume
     sudo mkdir -p /mnt/raid5_share
-    # Mount the 'share' logical volume
     sudo mount /dev/vg_raid5/share /mnt/raid5_share
-    # Get the UUID of the 'share' logical volume and add it to fstab for automatic mounting
     sudo blkid /dev/vg_raid5/share | awk '{print $2 " /mnt/raid5_share ext4 defaults 0 0"}' | sudo tee -a /etc/fstab
-    # Create a logical volume named 'web' with a size of 500M
     sudo lvcreate -L 500M -n web vg_raid5
-    # Format the 'web' logical volume with ext4 filesystem
     sudo mkfs.ext4 /dev/vg_raid5/web
-    # Create a mount point for the 'web' logical volume
     sudo mkdir -p /mnt/raid5_web
-    # Mount the 'web' logical volume
     sudo mount /dev/vg_raid5/web /mnt/raid5_web
-    # Get the UUID of the 'web' logical volume and add it to fstab for automatic mounting
     sudo blkid /dev/vg_raid5/web | awk '{print $2 " /mnt/raid5_web ext4 defaults 0 0"}' | sudo tee -a /etc/fstab
     systemctl daemon-reload
-    # Verify mounts
     df -h
 }
 
@@ -206,9 +189,7 @@ EOL
     PRIMARY_CONF="/etc/samba/smb.conf"
     INCLUDE_LINE="include = /etc/samba/smb.unauth.conf"
 
-    # Check if the include line already exists in the primary configuration file
     if ! grep -Fxq "$INCLUDE_LINE" "$PRIMARY_CONF"; then
-        # If not, append the include line to the end of the primary configuration file
         echo "$INCLUDE_LINE" >> "$PRIMARY_CONF"
         echo "Include line added to $PRIMARY_CONF"
     else
@@ -235,20 +216,14 @@ nfs(){
     dnf update -y
     dnf -y install nfs-utils
     systemctl enable nfs-server --now
-
     firewall-cmd --permanent --add-service=nfs
     firewall-cmd --permanent --add-service=mountd
     firewall-cmd --permanent --add-service=rpc-bind
     firewall-cmd --reload
-
     echo "/mnt/raid5_share *(rw,sync,no_root_squash)" > /etc/exports
-
     exportfs -a
-
     systemctl restart nfs-server
-
     echo "NFS services restarted"
-
     echo "Press any key to continue..."
     read -n 1 -s key
     clear
@@ -270,7 +245,6 @@ nfs(){
 }
 
 webservices(){
-
     backup_file(){
     ORIGINAL_FILE=$1
     if [ ! -f "$ORIGINAL_FILE" ]; then
@@ -392,24 +366,12 @@ EOL
 
 basic_root_website(){
     DOMAIN_NAME=$1
-
-    # Install Apache HTTP server and mod_ssl for SSL support
     dnf -y install httpd mod_ssl
-
-    # Create the directory for the root website
     mkdir -p /mnt/raid5_web/root
-
-    # Create a simple index.php file for the root website
     echo "<html><body><h1>Welcome to $DOMAIN_NAME</h1></body></html>" > /mnt/raid5_web/root/index.php
-    #echo "<html><body><h1>Welcome to $DOMAIN_NAME</h1><?php phpinfo(); ?></body></html>" > /mnt/raid5_web/root/index.php
-
-    # Set ownership and permissions
     chown -R apache:apache /mnt/raid5_web/root
     chcon -R --type=httpd_sys_content_t /mnt/raid5_web/root
-
     chmod -R 755 /mnt/raid5_web/root
-
-    # Set up the virtual host for the root domain (HTTP)
     cat <<EOL > /etc/httpd/conf.d/root.conf
 <VirtualHost *:80>
     ServerName $DOMAIN_NAME
@@ -458,16 +420,11 @@ EOL
     systemctl start httpd
     systemctl enable httpd
     systemctl restart httpd
-
-    # Open the HTTP and HTTPS ports in the firewall
     firewall-cmd --add-service=http --permanent
     firewall-cmd --add-service=https --permanent
     firewall-cmd --reload
-
-    # Verify HTTP and HTTPS Access
     echo "Verifying HTTP Access..."
     curl -I http://$DOMAIN_NAME
-
     echo "Verifying HTTPS Access..."
     curl -I https://$DOMAIN_NAME
 }
@@ -477,7 +434,6 @@ basic_db(){
     dnf -y install mariadb-server phpmyadmin
     systemctl start mariadb
     systemctl enable mariadb
-
     mysql_secure_installation <<EOF
 
 y
@@ -491,12 +447,8 @@ EOF
 
     firewall-cmd --add-service=mysql --permanent
     firewall-cmd --reload
-
     ln -s /usr/share/phpmyadmin /mnt/raid5_web/root/phpmyadmin
-
-    # Define the configuration file path
     conf_file="/etc/httpd/conf.d/phpMyAdmin.conf"
-
 
 cat <<EOL > $conf_file
 # phpMyAdmin - Web based MySQL browser written in php
@@ -547,16 +499,11 @@ Alias /phpmyadmin /usr/share/phpMyAdmin
 #</IfModule>
 EOL
 
-    # Restart Apache to apply changes
     systemctl restart httpd
-
     echo "Configuration updated and Apache restarted."
-
     ausearch -c 'mariadbd' --raw | audit2allow -M my-mariadbd
     semodule -X 300 -i my-mariadbd.pp
-
     echo "<html><body><h1>PHPMyAdmin installed. <a href='/phpmyadmin'>Access it here</a></h1></body></html>" > /mnt/raid5_web/root/index.php
-
     systemctl restart httpd
 }
 
@@ -656,47 +603,6 @@ EOL
 </VirtualHost>
 EOL
 
-#     # Set up the virtual host for the user's mail subdomain (HTTP with redirect to HTTPS)
-#     cat <<EOL > /etc/httpd/conf.d/mail-$USERNAME.conf
-# <VirtualHost *:80>
-#     ServerName mail.$USERNAME.$DOMAIN_NAME
-#     DocumentRoot /usr/share/roundcubemail
-#     <Directory /usr/share/roundcubemail>
-#         AllowOverride All
-#         Require all granted
-#     </Directory>
-#     DirectoryIndex index.php
-#     ErrorLog /var/log/httpd/mail_${USERNAME}_error.log
-#     CustomLog /var/log/httpd/mail_${USERNAME}_access.log combined
-
-#     # Redirect all HTTP traffic to HTTPS
-#     Redirect "/" "https://mail.$USERNAME.$DOMAIN_NAME/"
-# </VirtualHost>
-
-# <VirtualHost *:443>
-#     ServerName mail.$USERNAME.$DOMAIN_NAME
-#     DocumentRoot /usr/share/roundcubemail
-#     <Directory /usr/share/roundcubemail>
-#         AllowOverride All
-#         Require all granted
-#     </Directory>
-#     DirectoryIndex index.php
-#     SSLEngine on
-#     SSLCertificateFile /etc/httpd/ssl/$DOMAIN_NAME.crt
-#     SSLCertificateKeyFile /etc/httpd/ssl/$DOMAIN_NAME.key
-#     ErrorLog /var/log/httpd/mail_${USERNAME}_ssl_error.log
-#     CustomLog /var/log/httpd/mail_${USERNAME}_ssl_access.log combined
-# </VirtualHost>
-#EOL
-
-    # # Set up Maildir for the user
-    # maildirmake.dovecot /home/$USERNAME/Maildir
-    # chown -R $USERNAME:$USERNAME /home/$USERNAME/Maildir
-
-    # # Add the user to the Roundcube database
-    # mysql -u root -prootpassword -e "INSERT INTO roundcubemail.users (username, mail_host, created) VALUES ('$USERNAME', 'localhost', NOW());"
-
-    # Ensure proper SELinux context and restart Apache
     semanage fcontext -a -e /var/www /mnt/raid5_web
     restorecon -Rv /mnt
     systemctl restart httpd
