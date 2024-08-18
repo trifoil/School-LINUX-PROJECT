@@ -508,6 +508,8 @@ EOL
 }
 
 basic_mail(){
+    DOMAIN_NAME=$1
+
     echo "meow"
 
     configure_postfix(){
@@ -534,6 +536,8 @@ basic_mail(){
     systemctl enable postfix
 
     echo "Postfix configured for domain $DOMAIN_NAME."
+    echo "Press any key to exit..."
+    read -n 1 -s key
 }
 
 configure_dovecot(){
@@ -541,8 +545,13 @@ configure_dovecot(){
 
     # Backup the original config files
     cp /etc/dovecot/dovecot.conf /etc/dovecot/dovecot.conf.bak
+    if [ ! -f "/etc/dovecot/dovecot.conf" ]; then
+        touch /etc/dovecot/dovecot.conf
+    fi
     cp /etc/dovecot/conf.d/10-mail.conf /etc/dovecot/conf.d/10-mail.conf.bak
-
+    if [ ! -f "/etc/dovecot/conf.d/10-mail.conf" ]; then
+        touch /etc/dovecot/conf.d/10-mail.conf
+    fi
     # Configure Dovecot
     cat <<EOL > /etc/dovecot/dovecot.conf
 disable_plaintext_auth = yes
@@ -574,6 +583,8 @@ EOL
     systemctl enable dovecot
 
     echo "Dovecot configured for domain $DOMAIN_NAME."
+    echo "Press any key to exit..."
+    read -n 1 -s key
 }
 
 
@@ -607,6 +618,8 @@ EOL
     systemctl restart httpd
 
     echo "Roundcube configured with the domain $DOMAIN_NAME."
+    echo "Press any key to exit..."
+    read -n 1 -s key
 }
 
     DOMAIN_NAME=$1
