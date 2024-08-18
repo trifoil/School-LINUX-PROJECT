@@ -916,6 +916,7 @@ timezone_display() {
 
 security(){
 
+configure_clamav(){
     clear
     # Install ClamAV
     dnf update -y
@@ -944,7 +945,7 @@ security(){
     echo "Press any key to continue..."
     read -n 1 -s key
     clear
-
+}
     configure_fail2ban() {
         # Install Fail2Ban
         dnf install fail2ban -y
@@ -978,7 +979,7 @@ EOL
         echo "Press any key to continue..."
         read -n 1 -s key
     }
-
+    configure_clamav
     configure_fail2ban
 
 }
