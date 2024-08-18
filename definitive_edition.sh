@@ -1018,9 +1018,16 @@ backup(){
     # Use rsync to backup each directory from raid5_web on /mnt/backup/$TIMESTAMP/raid5_web
     rsync -avz /mnt/raid5_web /mnt/backup/$TIMESTAMP/raid5_web
 
+    # Create a directory to store user databases
+    mkdir /mnt/backup/$TIMESTAMP/user_databases
+
+    # Backup each user's database
+    while IFS= read -r USERNAME; do
+        mysqldump -u root -prootpassword ${USERNAME}_db > /mnt/backup/$TIMESTAMP/user_databases/${USERNAME}_db.sql
+    done < <(pdbedit -L | cut -d: -f1)
 
     # Append a timestamp to the log file
-    echo "$(date) - Backup completed" >> /mnt/backup/backup.log
+    echo "$(date) - User databases backed up" >> /mnt/backup/backup.log
        
     echo "Press any key to continue..."
     read -n 1 -s key
