@@ -155,6 +155,25 @@ raid(){
 ssh(){
     clear
     echo "Starting ssh"
+    sudo systemctl enable --now sshd
+    sudo systemctl start sshd
+    sudo firewall-cmd --permanent --add-service=ssh
+    sudo firewall-cmd --reload
+
+    # Generate SSH key pair
+    ssh-keygen -t rsa -b 4096
+
+    # Copy public key to authorized_keys file
+    cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+
+    # Set permissions for SSH files
+    chmod 700 ~/.ssh
+    chmod 600 ~/.ssh/id_rsa
+    chmod 644 ~/.ssh/id_rsa.pub
+    chmod 644 ~/.ssh/authorized_keys
+
+    # Restart SSH service
+    sudo systemctl restart sshd
 }
 
 unauthshare(){
