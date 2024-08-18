@@ -2,9 +2,9 @@
 
 clear
 
-RED='\033[0;31m' #Red
-BLUE='\e[38;5;33m' #Red
-NC='\033[0m' # No Color
+RED='\033[0;31m' 
+BLUE='\e[38;5;33m' 
+NC='\033[0m' 
 
 updatedb
 systemctl enable --now cockpit.socket
@@ -14,7 +14,6 @@ dnf -y install nfs-utils samba bind chrony fail2ban vsftpd rsync clamav clamd cl
 
 clear
 
-# Function to display the menu
 display_menu() {
     echo ""
     echo "|----------------------------------------------------------------------|"
@@ -133,10 +132,39 @@ done
 }
 
 raid(){
-
-    
     clear
     echo "Creating RAID..."
+    # Install necessary packages
+    sudo dnf install lvm2 mdadm -y
+    # Create a RAID 5 array with 3 devices
+    sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=3 /dev/sdb /dev/sdc /dev/sdd
+    # Create a physical volume on the RAID array
+    sudo pvcreate /dev/md0
+    # Create a volume group on the physical volume
+    sudo vgcreate vg_raid5 /dev/md0
+    # Create a logical volume named 'share' with a size of 500M
+    sudo lvcreate -L 500M -n share vg_raid5
+    # Format the 'share' logical volume with ext4 filesystem
+    sudo mkfs.ext4 /dev/vg_raid5/share
+    # Create a mount point for the 'share' logical volume
+    sudo mkdir -p /mnt/raid5_share
+    # Mount the 'share' logical volume
+    sudo mount /dev/vg_raid5/share /mnt/raid5_share
+    # Get the UUID of the 'share' logical volume and add it to fstab for automatic mounting
+    sudo blkid /dev/vg_raid5/share | awk '{print $2 " /mnt/raid5_share ext4 defaults 0 0"}' | sudo tee -a /etc/fstab
+    # Create a logical volume named 'web' with a size of 500M
+    sudo lvcreate -L 500M -n web vg_raid5
+    # Format the 'web' logical volume with ext4 filesystem
+    sudo mkfs.ext4 /dev/vg_raid5/web
+    # Create a mount point for the 'web' logical volume
+    sudo mkdir -p /mnt/raid5_web
+    # Mount the 'web' logical volume
+    sudo mount /dev/vg_raid5/web /mnt/raid5_web
+    # Get the UUID of the 'web' logical volume and add it to fstab for automatic mounting
+    sudo blkid /dev/vg_raid5/web | awk '{print $2 " /mnt/raid5_web ext4 defaults 0 0"}' | sudo tee -a /etc/fstab
+    systemctl daemon-reload
+    # Verify mounts
+    df -h
 }
 
 ssh(){
@@ -232,7 +260,7 @@ nfs(){
         case $choice in
             0) nfs ;;
             1) smb ;;
-            q|Q) clear && echo "Exiting the web server configuration wizard." && exit ;;
+            q|Q) clear && echo "Exiting the web server configuration wizard." && break ;;
             *) clear && echo "Invalid choice. Please enter a valid option." ;;
         esac
     done
@@ -533,7 +561,7 @@ EOL
 basic_mail(){
     echo "meow"
 
-    
+
 
     echo "Press any key to exit..."
     read -n 1 -s key
@@ -568,7 +596,7 @@ add_user(){
     echo
     DIR="/mnt/raid5_web/$USERNAME"
     mkdir -p "$DIR"
-    echo "Created $DIR directory ... " 
+    echo "Created $DIR directory ... "
     useradd $USERNAME
     echo "$USERNAME:$PASSWORD" | chpasswd
     smbpasswd -a $USERNAME
@@ -576,6 +604,15 @@ add_user(){
 
     chown -R $USERNAME:$USERNAME "$DIR"
     chmod -R 755 "$DIR"
+
+    cat <<EOL >> /etc/samba/smb.conf
+[$USERNAME]
+    path = $DIR
+    valid users = $USERNAME
+    read only = no
+EOL
+
+    systemctl restart smb
 
     # Create the user's database
     mysql -u root -prootpassword -e "CREATE DATABASE ${USERNAME}_db;"
@@ -648,14 +685,14 @@ EOL
 #     ErrorLog /var/log/httpd/mail_${USERNAME}_ssl_error.log
 #     CustomLog /var/log/httpd/mail_${USERNAME}_ssl_access.log combined
 # </VirtualHost>
-EOL
+#EOL
 
-    # Set up Maildir for the user
-    maildirmake.dovecot /home/$USERNAME/Maildir
-    chown -R $USERNAME:$USERNAME /home/$USERNAME/Maildir
+    # # Set up Maildir for the user
+    # maildirmake.dovecot /home/$USERNAME/Maildir
+    # chown -R $USERNAME:$USERNAME /home/$USERNAME/Maildir
 
-    # Add the user to the Roundcube database
-    mysql -u root -prootpassword -e "INSERT INTO roundcubemail.users (username, mail_host, created) VALUES ('$USERNAME', 'localhost', NOW());"
+    # # Add the user to the Roundcube database
+    # mysql -u root -prootpassword -e "INSERT INTO roundcubemail.users (username, mail_host, created) VALUES ('$USERNAME', 'localhost', NOW());"
 
     # Ensure proper SELinux context and restart Apache
     semanage fcontext -a -e /var/www /mnt/raid5_web
@@ -664,6 +701,9 @@ EOL
 
     echo "User $USERNAME has been created with a mail account and a database."
     echo "Mail can be accessed at https://mail.$USERNAME.$DOMAIN_NAME"
+
+    echo "Press any key to continue..."
+    read -n 1 -s key
 }
 
 
@@ -816,36 +856,28 @@ security(){
 
     clear
     # Install ClamAV
-    dnf update
+    dnf update -y
     dnf install clamav -y
-
     # Update ClamAV database
     freshclam
-
     # Schedule regular scans
     # Edit the crontab file and add the daily scan command
     echo "0 2 * * * clamscan -r /" | sudo tee -a /etc/crontab
-
     # Enable automatic scanning on file access
     systemctl enable clamav-freshclam
     systemctl enable clamd@scan
-
     # Start ClamAV service
     systemctl start clamav-freshclam
     systemctl start clamd@scan
-
     # Verify ClamAV status
     systemctl status clamav-freshclam
     systemctl status clamd@scan
-
     # Configure ClamAV for local socket scanning
     sed -i 's/^#LocalSocket /LocalSocket /' /etc/clamd.d/scan.conf
     sed -i 's/^TCPSocket /#TCPSocket /' /etc/clamd.d/scan.conf
-
-
     # Restart ClamAV service to apply changes
     systemctl restart clamd@scan
-
+    
     echo "Done..."
     echo "Press any key to continue..."
     read -n 1 -s key
