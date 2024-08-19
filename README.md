@@ -101,3 +101,10 @@ A typical email server setup might involve:
 
 This combination ensures that emails can be sent, received, and accessed by users efficiently and securely.
 
+
+
+fstab manque les options de montage securité et quotas
+
+ftp oubli du chroot
+
+pas de cert autosigne pour lle ftp
