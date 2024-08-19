@@ -19,7 +19,8 @@ sudo nano /etc/resolv.conf
 
 
 
-```                                                                           
+```
+dnf install git                                                                   
 rm -rf git School-LINUX-PROJECT
 git clone https://github.com/trifoil/School-LINUX-PROJECT.git
 cd School-LINUX-PROJECT
