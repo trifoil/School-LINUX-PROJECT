@@ -1003,11 +1003,13 @@ EOL
 
 backup(){
     clear
+    
+    # Display available disks
     lsblk
 
+    # Prompt user to select a disk for backup
     read -p "Enter the disk name to use for backup (e.g., sdb): " BACKUP_DISK
     echo "Selected disk for backup: $BACKUP_DISK"
-    # Rest of the backup code goes here
 
     # Create a mount point for the backup disk
     mkdir /mnt/backup
@@ -1031,7 +1033,7 @@ backup(){
     # Use rsync to backup the /mnt/raid5_share directory
     rsync -avz /mnt/raid5_share /mnt/backup/$TIMESTAMP/raid5_share
 
-    # Use rsync to backup each directory from raid5_web on /mnt/backup/$TIMESTAMP/raid5_web
+    # Use rsync to backup each directory from raid5_web
     rsync -avz /mnt/raid5_web /mnt/backup/$TIMESTAMP/raid5_web
 
     # Create a directory to store user databases
@@ -1044,13 +1046,50 @@ backup(){
 
     # Append a timestamp to the log file
     echo "$(date) - User databases backed up" >> /mnt/backup/backup.log
+    
+    # Auto-generate the backup script file
+    SCRIPT_PATH="/path/to/backup.sh"
+    echo "#!/bin/bash
+
+backup(){
+    clear
+    lsblk
+
+    read -p \"Enter the disk name to use for backup (e.g., sdb): \" BACKUP_DISK
+    echo \"Selected disk for backup: \$BACKUP_DISK\"
+
+    mkdir /mnt/backup
+    mount -o noexec,nosuid,nodev /dev/\$BACKUP_DISK /mnt/backup
+    mkfs.ext4 /dev/\$BACKUP_DISK
+    touch /mnt/backup/backup.log
+    echo \"\$(date) - Backup started\" >> /mnt/backup/backup.log
+
+    TIMESTAMP=\$(date +\"%Y-%m-%d_%H-%M-%S\")
+    mkdir /mnt/backup/\$TIMESTAMP
+    rsync -avz /mnt/raid5_share /mnt/backup/\$TIMESTAMP/raid5_share
+    rsync -avz /mnt/raid5_web /mnt/backup/\$TIMESTAMP/raid5_web
+
+    mkdir /mnt/backup/\$TIMESTAMP/user_databases
+    while IFS= read -r USERNAME; do
+        mysqldump -u root -prootpassword \${USERNAME}_db > /mnt/backup/\$TIMESTAMP/user_databases/\${USERNAME}_db.sql
+    done < <(pdbedit -L | cut -d: -f1)
+
+    echo \"\$(date) - User databases backed up\" >> /mnt/backup/backup.log
+}
+
+backup" > $SCRIPT_PATH
+
+    # Make the script executable
+    chmod +x $SCRIPT_PATH
+
+    # Schedule the script with cron
+    (crontab -l 2>/dev/null; echo "0 23 * * * $SCRIPT_PATH") | crontab -
        
+    echo "Backup script created and scheduled with cron."
     echo "Press any key to continue..."
     read -n 1 -s key
-
-    
-
 }
+
 
 logs(){
     clear
