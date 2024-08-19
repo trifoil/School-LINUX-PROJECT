@@ -141,12 +141,12 @@ raid(){
     sudo lvcreate -L 500M -n share vg_raid5
     sudo mkfs.ext4 /dev/vg_raid5/share
     sudo mkdir -p /mnt/raid5_share
-    sudo mount /dev/vg_raid5/share /mnt/raid5_share
+    sudo mount -o noexec,nosuid,nodev /dev/vg_raid5/share /mnt/raid5_share
     sudo blkid /dev/vg_raid5/share | awk '{print $2 " /mnt/raid5_share ext4 defaults 0 0"}' | sudo tee -a /etc/fstab
     sudo lvcreate -L 500M -n web vg_raid5
     sudo mkfs.ext4 /dev/vg_raid5/web
     sudo mkdir -p /mnt/raid5_web
-    sudo mount /dev/vg_raid5/web /mnt/raid5_web
+    sudo mount -o noexec,nosuid,nodev /dev/vg_raid5/web /mnt/raid5_web
     sudo blkid /dev/vg_raid5/web | awk '{print $2 " /mnt/raid5_web ext4 defaults 0 0"}' | sudo tee -a /etc/fstab
     systemctl daemon-reload
     df -h
@@ -160,19 +160,15 @@ ssh(){
     sudo firewall-cmd --permanent --add-service=ssh
     sudo firewall-cmd --reload
 
-    # Generate SSH key pair
     ssh-keygen -t rsa -b 4096
 
-    # Copy public key to authorized_keys file
     cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 
-    # Set permissions for SSH files
     chmod 700 ~/.ssh
     chmod 600 ~/.ssh/id_rsa
     chmod 644 ~/.ssh/id_rsa.pub
     chmod 644 ~/.ssh/authorized_keys
 
-    # Restart SSH service
     sudo systemctl restart sshd
 }
 
@@ -181,7 +177,6 @@ unauthshare(){
     echo "Installing Samba share"
     sudo mkdir -p /mnt/raid5_share
 
-    # Set quota on /mnt/raid5_share
     quotacheck -cug /mnt/raid5_share
     quotaon /mnt/raid5_share
     edquota -u nobody -f /mnt/raid5_share -s 500M -h 600M
@@ -1019,7 +1014,7 @@ backup(){
     mkdir /mnt/backup
 
     # Mount the backup disk
-    mount /dev/$BACKUP_DISK /mnt/backup
+    mount -o noexec,nosuid,nodev /dev/$BACKUP_DISK /mnt/backup
 
     # Format the disk in ext4
     mkfs.ext4 /dev/$BACKUP_DISK
