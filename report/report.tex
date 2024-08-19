@@ -47,7 +47,7 @@ Nous avons le choix d'utiliser n'importe quelle distributon RedHat-like, par exe
 Le choix se porte sur Fedora, qui a une plus grosse communauté (dont je fais partie pour la partie desktop) et a ma préférence (utiliser alma ne changerait bien sûr quasiment rien, les deux distributions étant très similaires).
 
 	
-Les consignes professeur sont reprises dans le sous-point suivant.
+Les consignes du Professeur sont reprises dans le sous-point suivant.
 
 	
 L'OS de test est une machine virtuelle, hébergée sur VirtualBox. 
@@ -69,7 +69,7 @@ La sécurité implique également les sauvegardes.
 \end{figure}
 \newpage
 	
-\subsection{Consignes (pratiques) professeur}
+\subsection{Consignes (pratiques) du Professeur}
 	
 Les consignes sont les suivantes : 
 	
@@ -104,13 +104,13 @@ L'ensemble sera scripté pour coller à l'ensemble des cas d'utilisation. Voici 
 \item SSL \colorbox{green}{\textcolor{black}{OK}}							
 \item DB \colorbox{green}{\textcolor{black}{OK}}							
 \item PHP \colorbox{green}{\textcolor{black}{OK}}							
-\item PHGPMyAdmin \colorbox{green}{\textcolor{black}{OK}}		
-\item Mail 	\colorbox{red}{\textcolor{black}{OK}}	
+\item PHPMyAdmin \colorbox{green}{\textcolor{black}{OK}}		
+\item Mail 	\colorbox{red}{\textcolor{black}{PAS OK}}	
 \end{itemize}
 \item Time server \colorbox{green}{\textcolor{black}{OK}}
 \item Sécurisation \colorbox{green}{\textcolor{black}{OK}}	
 \item Backup \colorbox{green}{\textcolor{black}{OK}}	
-\item Logs \colorbox{red}{\textcolor{black}{OK}}	
+\item Logs \colorbox{red}{\textcolor{black}{PAS OK}}	
 		\end{itemize}
 		
 		
@@ -295,7 +295,7 @@ Ensuite on valide les changements :
 \end{figure}
 
 
-Je choisis personnellement d'avoir un compte root au cas où, mais il n'est pas conseillé en production.
+Je choisis personnellement d'avoir un compte root au cas où, car c'est un serveur de test ! Mais il n'est pas conseillé en production !
 
 \begin{figure}[h!]
 		\centering
@@ -401,7 +401,7 @@ git clone https://github.com/trifoil/School-LINUX-PROJECT.git
 
 \subsection{Menu principal}
 
-Pour lancer le script, il suffit de se rendre dans le directory School-LINUX-PROJEC, et d'exécuter le script intitulé "install.sh" en sudo.
+Pour lancer le script, il suffit de se rendre dans le directory School-LINUX-PROJECT, et d'exécuter le script intitulé "install.sh" en sudo.
 
 \subsection{Hostname}
 
@@ -483,16 +483,14 @@ Et puis quelques autres choses sont configurées comme par exemple l'IPv4 seulem
 
 La page web de base est une simple page qui redirige vers l'adresse de la base de données.
 
+Toutes les pages accédées par http sont redirigées vers leurs pages en https
+
 \item ssl
 
 Un certificat auto-signé ssl est configuré lors du setup.
 
 
-
 \end{itemize}
-
-
-
 
 
 \subsubsection{Ajout d'utilisateurs}
@@ -502,39 +500,86 @@ Un certificat auto-signé ssl est configuré lors du setup.
 Le dossier est partagé par Samba et FTP.
 
 Pour le partage samba, on y accède simplement par l'explorateur de fichiers, par exemple si le username est joe, on aura: \texttt{smb://192.168.1.102/joe/}  
+
+Pour le partage FTP, 
+
+\texttt{sudo dnf install curlftpfs}
+
+
+\texttt{sudo mkdir -p /mnt/ftp}
+
+
+\texttt{sudo curlftpfs ftp://USERNAME:PASSWORD@DOMAIN\_NAME /mnt/ftp}
+
+
+\texttt{ls /mnt/ftp}
+
+
+Et pour le démonter :
+
+
+\texttt{sudo umount /mnt/ftp}
+
+\item Base de données
+
+Une base de données est créée pour chaque utilisateur ajouté et accessible par son mot de passe
+\item Page web
+
+Chaque utilisateur a une page web, stockée dans le directory à son nom dans \texttt{/mnt/raid5\_web} qui est le même à être partagé en Samba et NFS.
+
+\item Mail
+
+Malheureusement, je n'ai pas eu le temps de résoudre mes problèmes au niveau du serveur mail.
+
+Postfix, dovecot et roundcube devaient être utilisés mais du fait de la configuration web de roundcube j'ai perdu du temps et n'ai pas pu finir dans les temps.
+
 \end{itemize}
 
 
 \subsection{Serveur temps}
 
+Un menu utilisateur permet de sélectionner la timezone du serveur NTP, avec lequel les autres machines du réseau peuvent se synchroniser.
+
 \subsection{Clamav et Fail2ban}
+
+Installation de clamav qui scanne le système complet à intervalles réguliers et de Fail2ban qui bloque le login sur le ssh et sur cockpit après trois tentatives infructueuses.
+
 \subsection{Backup}
+
+Script de backup de tous les fichiers importants :
+
+\begin{itemize}
+\item \texttt{/mnt/raid5\_share}
+\item \texttt{/mnt/raid5\_web}
+\item sauvegarde de toutes les DB des utilisateurs
+\end{itemize}
+
 \subsection{Logs d'installation}
 
+Pas setup
 
 \pagebreak
 
 	\newpage
 	\section{Conclusion}
 
+En conclusion, le projet était intéressant car il force à réfléchir aux solutions pratiques pour arriver à la solution voulue. On est forcé d'utiliser les logs, aller fouiller dans les fichiers de configuration, et utiliser beaucoup de commandes diverses.
 
-	\begin{figure}[h]
-		\centering
-		\includegraphics[width=0.5\textwidth]{gosling.png}
-		
-		\label{fig:gosling}
-	\end{figure}
-	
+Je trouve personnellement la containeurisation beaucoup plus attrayante avec docker ou kubernetes par exemple, et desconfigurations beaucoup plus simples à éditer et prévues pour la production.
+
+En effet, le script pourrait potentiellement avoir des failles de sécurité et c'es tde plus en plus vrai au plus il y a de scripts (en nombre ou longueur).
+
+Projet très intéressant cependant, un peu dommage mais qui me prépare personnellement au projet interdisciplinaire, que j'attends avec impatience.
+
+J'ai vraiment bien aimé le fait que ce projet m'aie forcé à apprendre de nouvelles choses et la satisfaction de résoudre les problèmes.
 
 	\begin{thebibliography}{9}
-		\bibitem{reference1}
-		Author, A. (Year). Title of the article. \textit{Journal Name}, Volume(Issue), Pages.
 		
-		\bibitem{reference2}
+		\bibitem{reference1}
 		Raid sous Oracle VirtualBox 
 		https://youtu.be/ZHVmGfteHCg
 		
-		\bibitem{reference3}	
+		\bibitem{reference2}	
 		Configuration de Fedora Server 40
 		https://www.server-world.info
 		
@@ -542,6 +587,6 @@ Pour le partage samba, on y accède simplement par l'explorateur de fichiers, pa
 
 	\section*{Remerciements}
 	
-	Remerciements à Pauline M. pour ses encouragement et son aide à la concentration :)
+	Remerciements à T.M. pour ses encouragement et son aide à la concentration :)
 
 \end{document}
